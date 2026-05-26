@@ -8,19 +8,25 @@ const privacySections = [
     title: "Your recordings",
     icon: Mic,
     copy:
-      "Vocali keeps saved replays in this browser on your device. When you submit an attempt, the recording is sent through the server to a transcription service only to prepare a transcript.",
+      "Vocali keeps saved replay references in this browser on your device. When you submit a recording, the audio is sent securely to Vocali's transcription endpoint so it can prepare a transcript.",
   },
   {
     title: "Your practice history",
     icon: Database,
     copy:
-      "Completed attempts and transcripts, when available, are stored locally in this browser so the demo can remember your progress. You can clear this local data from Settings, or it may be removed if you clear browser data.",
+      "Saved practice history, transcripts, progress, and replay references are stored locally in this browser for the MVP. You can clear practice history and saved recordings from Settings.",
+  },
+  {
+    title: "Speaking metrics",
+    icon: Sparkles,
+    copy:
+      "When a transcript is available, Vocali uses it to calculate simple signals like word count, pace, filler words, repetition, and time used.",
   },
   {
     title: "What is not built yet",
     icon: Sparkles,
     copy:
-      "Vocali does not currently use full AI coaching, sync accounts, or store recordings in a cloud account. Feedback remains the same mock coaching for now.",
+      "Vocali does not yet provide full AI coaching or semantic judgement of answer quality. It also does not have accounts, cloud sync, Supabase storage, payments, or subscriptions yet.",
   },
 ];
 
@@ -41,8 +47,9 @@ export default function PrivacyPage() {
             Your practice stays close to you.
           </h1>
           <p className="mt-4 text-base font-bold leading-6 text-vocali-muted">
-            This demo keeps saved replays and progress local, with audio sent
-            for transcription only when you submit an attempt.
+            Vocali is still a local-first MVP. Your progress stays in this
+            browser, with audio sent for transcription only when you submit an
+            attempt.
           </p>
         </div>
 
