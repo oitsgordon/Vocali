@@ -64,6 +64,8 @@ type LeaveConfirmation = {
   actionLabel: string;
 };
 
+type RecordingErrorKind = "permission" | "recording" | "unsupported";
+
 type BackControlProps = {
   backHref: string;
   backLabel: string;
@@ -80,8 +82,46 @@ const unsupportedRecordingMessage =
   "Recording is not supported in this browser yet. Try Chrome, Safari, or Edge.";
 const recordingFailedMessage =
   "Something went wrong while recording. Please try again.";
+const recordingSaveFailedMessage =
+  "Recording could not be saved. Please try again.";
 const transcriptionFallbackMessage =
   "Transcript preparation did not finish, but you can still continue with mock feedback.";
+const recorderMimeTypeCandidates = [
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/mp4",
+  "audio/aac",
+];
+
+function logRecordingEvent(message: string, details?: unknown) {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  if (details === undefined) {
+    console.info(`[Vocali recording] ${message}`);
+    return;
+  }
+
+  console.info(`[Vocali recording] ${message}`, details);
+}
+
+function getSupportedRecorderMimeType() {
+  if (
+    typeof MediaRecorder === "undefined" ||
+    typeof MediaRecorder.isTypeSupported !== "function"
+  ) {
+    return undefined;
+  }
+
+  return recorderMimeTypeCandidates.find((mimeType) => {
+    try {
+      return MediaRecorder.isTypeSupported(mimeType);
+    } catch {
+      return false;
+    }
+  });
+}
 
 function createAttemptId() {
   return `attempt-${new Date().getTime()}`;
@@ -235,6 +275,8 @@ export function PracticeSession({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [recordingErrorKind, setRecordingErrorKind] =
+    useState<RecordingErrorKind | null>(null);
   const [transcript, setTranscript] = useState<string | undefined>();
   const [speakingMetrics, setSpeakingMetrics] = useState<
     SpeakingMetrics | undefined
@@ -256,6 +298,7 @@ export function PracticeSession({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioUrlRef = useRef<string | null>(null);
+  const recorderMimeTypeRef = useRef<string | undefined>(undefined);
   const stopFallbackRef = useRef<number | null>(null);
   const hasFinalizedRecordingRef = useRef(false);
   const hasStartedMicSetupRef = useRef(false);
@@ -297,6 +340,7 @@ export function PracticeSession({
     setAudioBlob(null);
     audioChunksRef.current = [];
     setRecordingError(null);
+    setRecordingErrorKind(null);
     setTranscript(undefined);
     setSpeakingMetrics(undefined);
     setTranscriptStatus("not_started");
@@ -323,6 +367,7 @@ export function PracticeSession({
     }
 
     mediaRecorderRef.current = null;
+    recorderMimeTypeRef.current = undefined;
     stopMicrophoneTracks();
     recordingStartedAtRef.current = null;
     clearRecording();
@@ -360,6 +405,7 @@ export function PracticeSession({
       recorder.resume();
     } catch {
       setRecordingError(recordingFailedMessage);
+      setRecordingErrorKind("recording");
     }
   }, []);
 
@@ -372,12 +418,23 @@ export function PracticeSession({
       hasFinalizedRecordingRef.current = true;
       clearStopFallback();
 
+      const chunkMimeType = audioChunksRef.current.find((chunk) => chunk.type)
+        ?.type;
+      const finalMimeType =
+        mimeType || recorderMimeTypeRef.current || chunkMimeType || "audio/webm";
       const audioBlob = new Blob(audioChunksRef.current, {
-        type: mimeType || "audio/webm",
+        type: finalMimeType,
+      });
+
+      logRecordingEvent("finalized recording blob", {
+        blobSize: audioBlob.size,
+        chunkCount: audioChunksRef.current.length,
+        mimeType: finalMimeType,
       });
 
       stopMicrophoneTracks();
       mediaRecorderRef.current = null;
+      recorderMimeTypeRef.current = undefined;
       setIsPreparingRecording(false);
       setIsStoppingRecording(false);
       wasRecorderPausedByLeaveRef.current = false;
@@ -398,7 +455,8 @@ export function PracticeSession({
 
       if (audioBlob.size === 0) {
         setAudioBlob(null);
-        setRecordingError(recordingFailedMessage);
+        setRecordingError(recordingSaveFailedMessage);
+        setRecordingErrorKind("recording");
         setPhase("mic_setup");
         return;
       }
@@ -411,19 +469,37 @@ export function PracticeSession({
       audioUrlRef.current = nextAudioUrl;
       setAudioBlob(audioBlob);
       setAudioUrl(nextAudioUrl);
+      setRecordingError(null);
+      setRecordingErrorKind(null);
       setPhase("stopped");
     },
     [clearStopFallback, speakingSeconds, stopMicrophoneTracks],
+  );
+
+  const scheduleFinalizeRecording = useCallback(
+    (mimeType?: string, delayMs = 120) => {
+      clearStopFallback();
+      stopFallbackRef.current = window.setTimeout(() => {
+        finalizeRecording(mimeType);
+      }, delayMs);
+    },
+    [clearStopFallback, finalizeRecording],
   );
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
 
     if (!recorder || recorder.state === "inactive") {
+      logRecordingEvent("stop requested without active recorder", {
+        recorderState: recorder?.state ?? "missing",
+      });
       stopMicrophoneTracks();
       setIsPreparingRecording(false);
       setIsStoppingRecording(false);
       recordingStartedAtRef.current = null;
+      recorderMimeTypeRef.current = undefined;
+      setRecordingError(recordingSaveFailedMessage);
+      setRecordingErrorKind("recording");
       setPhase((currentPhase) =>
         currentPhase === "recording" ? "mic_setup" : currentPhase,
       );
@@ -439,6 +515,7 @@ export function PracticeSession({
     }
 
     try {
+      logRecordingEvent("stopping recorder", { state: recorder.state });
       recorder.stop();
     } catch {
       finalizeRecording(recorder.mimeType);
@@ -448,8 +525,12 @@ export function PracticeSession({
     clearStopFallback();
     stopFallbackRef.current = window.setTimeout(() => {
       finalizeRecording(recorder.mimeType);
-    }, 1200);
-  }, [clearStopFallback, finalizeRecording, stopMicrophoneTracks]);
+    }, 1800);
+  }, [
+    clearStopFallback,
+    finalizeRecording,
+    stopMicrophoneTracks,
+  ]);
 
   const startRecording = useCallback(() => {
     const stream = mediaStreamRef.current;
@@ -458,38 +539,66 @@ export function PracticeSession({
       typeof MediaRecorder === "undefined"
     ) {
       setRecordingError(unsupportedRecordingMessage);
+      setRecordingErrorKind("unsupported");
       return;
     }
 
     if (!stream) {
       setRecordingError(microphonePermissionMessage);
+      setRecordingErrorKind("permission");
       setPhase("mic_setup");
       return;
     }
 
     try {
-      const recorder = new MediaRecorder(stream);
+      const selectedMimeType = getSupportedRecorderMimeType();
+      const recorder = selectedMimeType
+        ? new MediaRecorder(stream, { mimeType: selectedMimeType })
+        : new MediaRecorder(stream);
+      const effectiveMimeType =
+        recorder.mimeType || selectedMimeType || undefined;
 
       mediaRecorderRef.current = recorder;
+      recorderMimeTypeRef.current = effectiveMimeType;
       audioChunksRef.current = [];
       hasFinalizedRecordingRef.current = false;
       recordingStartedAtRef.current = Date.now();
       speakRemainingMsRef.current = speakingSeconds * millisecondsPerSecond;
       setSpeakTimerResetKey((current) => current + 1);
       setIsStoppingRecording(false);
+      logRecordingEvent("created recorder", {
+        requestedMimeType: selectedMimeType ?? "browser default",
+        recorderMimeType: recorder.mimeType || "not reported",
+      });
 
       recorder.ondataavailable = (event) => {
+        logRecordingEvent("recorder dataavailable", {
+          size: event.data.size,
+          type: event.data.type || "not reported",
+        });
+
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       recorder.onstart = () => {
+        logRecordingEvent("recorder started", { state: recorder.state });
         setIsPreparingRecording(false);
       };
 
-      recorder.onerror = () => {
+      recorder.onpause = () => {
+        logRecordingEvent("recorder paused", { state: recorder.state });
+      };
+
+      recorder.onresume = () => {
+        logRecordingEvent("recorder resumed", { state: recorder.state });
+      };
+
+      recorder.onerror = (event) => {
+        logRecordingEvent("recorder error", event);
         setRecordingError(recordingFailedMessage);
+        setRecordingErrorKind("recording");
         clearStopFallback();
         stopMicrophoneTracks();
         setIsPreparingRecording(false);
@@ -498,22 +607,31 @@ export function PracticeSession({
       };
 
       recorder.onstop = () => {
-        finalizeRecording(recorder.mimeType);
+        logRecordingEvent("recorder stopped", { state: recorder.state });
+        scheduleFinalizeRecording(recorder.mimeType || effectiveMimeType);
       };
 
       setRecordingError(null);
-      recorder.start();
+      setRecordingErrorKind(null);
+      recorder.start(1000);
       setIsPreparingRecording(false);
       setPhase("recording");
-    } catch {
+    } catch (error) {
+      logRecordingEvent("recorder start failed", error);
       stopMicrophoneTracks();
       setIsPreparingRecording(false);
       setIsStoppingRecording(false);
       recordingStartedAtRef.current = null;
       setRecordingError(recordingFailedMessage);
+      setRecordingErrorKind("recording");
       setPhase("mic_setup");
     }
-  }, [clearStopFallback, finalizeRecording, speakingSeconds, stopMicrophoneTracks]);
+  }, [
+    clearStopFallback,
+    scheduleFinalizeRecording,
+    speakingSeconds,
+    stopMicrophoneTracks,
+  ]);
 
   const setupMicrophone = useCallback(async () => {
     hasStartedMicSetupRef.current = true;
@@ -524,6 +642,7 @@ export function PracticeSession({
       typeof MediaRecorder === "undefined"
     ) {
       setRecordingError(unsupportedRecordingMessage);
+      setRecordingErrorKind("unsupported");
       setIsPreparingRecording(false);
       return;
     }
@@ -544,17 +663,24 @@ export function PracticeSession({
       mediaStreamRef.current = stream;
       setRecordingStream(stream);
       setRecordingError(null);
+      setRecordingErrorKind(null);
       setIsPreparingRecording(false);
       setPhase("countdown");
     } catch (error) {
       stopMicrophoneTracks();
       setIsPreparingRecording(false);
-      setRecordingError(
+      const isPermissionError =
         error instanceof DOMException &&
-          (error.name === "NotAllowedError" || error.name === "SecurityError")
-          ? microphonePermissionMessage
-          : recordingFailedMessage,
+        (error.name === "NotAllowedError" || error.name === "SecurityError");
+
+      logRecordingEvent(
+        isPermissionError ? "microphone permission error" : "microphone setup error",
+        error,
       );
+      setRecordingError(
+        isPermissionError ? microphonePermissionMessage : recordingFailedMessage,
+      );
+      setRecordingErrorKind(isPermissionError ? "permission" : "recording");
       setPhase("mic_setup");
     }
   }, [clearRecording, stopMicrophoneTracks]);
@@ -636,6 +762,7 @@ export function PracticeSession({
       }
 
       mediaRecorderRef.current = null;
+      recorderMimeTypeRef.current = undefined;
       stopMicrophoneTracks();
 
       if (audioUrlRef.current) {
@@ -833,6 +960,7 @@ export function PracticeSession({
         {...backControls}
         challenge={challenge ?? challengePool[carouselIndex] ?? mockChallenges[0]}
         errorMessage={recordingError}
+        errorKind={recordingErrorKind}
         isPreparingRecording={isPreparingRecording}
         onRetry={() => void setupMicrophone()}
       />,
@@ -859,6 +987,7 @@ export function PracticeSession({
       audioMeterStream={recordingStream}
       {...backControls}
       errorMessage={recordingError}
+      errorKind={recordingErrorKind}
       isPreparingRecording={isPreparingRecording}
       isStoppingRecording={isStoppingRecording}
       planningSeconds={planningSeconds}
@@ -1195,6 +1324,7 @@ function PlanningView({
 type MicrophoneSetupViewProps = {
   challenge: Challenge;
   errorMessage: string | null;
+  errorKind: RecordingErrorKind | null;
   isPreparingRecording: boolean;
   onRetry: () => void;
 } & BackControlProps;
@@ -1205,9 +1335,36 @@ function MicrophoneSetupView({
   onBackRequest,
   challenge,
   errorMessage,
+  errorKind,
   isPreparingRecording,
   onRetry,
 }: MicrophoneSetupViewProps) {
+  const isRecordingProblem = errorKind === "recording";
+  const isUnsupported = errorKind === "unsupported";
+  const statusLabel = isPreparingRecording
+    ? "Opening microphone"
+    : isRecordingProblem
+      ? "Recording not saved"
+      : isUnsupported
+        ? "Recording unavailable"
+        : "Microphone needed";
+  const heading = isRecordingProblem
+    ? "Recording could not be saved."
+    : isUnsupported
+      ? "Recording is not supported here yet."
+      : "Allow microphone access to record your answer.";
+  const helper = isRecordingProblem
+    ? "Your microphone permission is okay. Try again and Vocali will start a fresh countdown."
+    : "The 3-second countdown will only start after permission is granted.";
+  const errorHeading = isRecordingProblem
+    ? "Recording needs attention"
+    : "Microphone needs attention";
+  const retryLabel = isPreparingRecording
+    ? "Opening mic..."
+    : isRecordingProblem
+      ? "Try recording again"
+      : "Try microphone again";
+
   return (
     <section className="vocali-session-timed">
       <PracticeHeader
@@ -1238,19 +1395,19 @@ function MicrophoneSetupView({
           <Mic className="h-[clamp(3.5rem,12dvh,5rem)] w-[clamp(3.5rem,12dvh,5rem)]" strokeWidth={3} />
         </div>
         <p className="mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
-          {isPreparingRecording ? "Opening microphone" : "Microphone needed"}
+          {statusLabel}
         </p>
         <h2 className="vocali-session-heading mt-2 max-w-xs font-black tracking-[-0.04em] text-vocali-teal-deep">
-          Allow microphone access to record your answer.
+          {heading}
         </h2>
         <p className="vocali-session-helper mt-3 max-w-xs text-sm font-bold leading-5 text-vocali-muted">
-          The 3-second countdown will only start after permission is granted.
+          {helper}
         </p>
 
         {errorMessage ? (
           <div className="mt-5 rounded-[1.25rem] border-2 border-vocali-orange/30 bg-white p-4 text-left shadow-[0_10px_24px_rgb(7_50_71/0.08)]">
             <p className="text-sm font-black text-vocali-orange">
-              Microphone needs attention
+              {errorHeading}
             </p>
             <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
               {errorMessage}
@@ -1266,7 +1423,7 @@ function MicrophoneSetupView({
         className="vocali-session-action flex w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)] disabled:opacity-70"
       >
         <Mic className="h-6 w-6" strokeWidth={3} />
-        {isPreparingRecording ? "Opening mic..." : "Try microphone again"}
+        {retryLabel}
       </button>
     </section>
   );
@@ -1346,6 +1503,7 @@ type SpeakingViewProps = {
   audioUrl: string | null;
   audioMeterStream: MediaStream | null;
   errorMessage: string | null;
+  errorKind: RecordingErrorKind | null;
   isPreparingRecording: boolean;
   isStoppingRecording: boolean;
   planningSeconds: number;
