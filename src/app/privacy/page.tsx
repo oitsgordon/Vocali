@@ -82,7 +82,7 @@ export default function PrivacyPage() {
 
         <Link
           href="/profile"
-          className="mt-auto flex h-16 w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
+          className="mt-3 flex h-16 w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
         >
           <ArrowLeft className="h-5 w-5" strokeWidth={3} />
           Back to profile
