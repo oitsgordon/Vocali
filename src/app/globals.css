@@ -1,26 +1,276 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fff8ec;
+  --foreground: #073247;
+  --vocali-teal: #00a7a5;
+  --vocali-teal-deep: #073247;
+  --vocali-orange: #ff7a1a;
+  --vocali-cream: #fff8ec;
+  --vocali-card: #ffffff;
+  --vocali-muted: #64748b;
+  --vocali-border: #bfedea;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-vocali-teal: var(--vocali-teal);
+  --color-vocali-teal-deep: var(--vocali-teal-deep);
+  --color-vocali-orange: var(--vocali-orange);
+  --color-vocali-cream: var(--vocali-cream);
+  --color-vocali-card: var(--vocali-card);
+  --color-vocali-muted: var(--vocali-muted);
+  --color-vocali-border: var(--vocali-border);
+  --font-sans: var(--font-nunito-sans);
+  --shadow-vocali-card: 0 18px 45px rgb(7 50 71 / 0.1);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-nunito-sans), Arial, Helvetica, sans-serif;
 }
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@property --timer-progress {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.vocali-timer-ring {
+  --timer-progress: var(--timer-static-progress, 0%);
+  background: conic-gradient(
+    var(--timer-color) var(--timer-progress),
+    var(--timer-track) 0
+  );
+}
+
+.vocali-session-timed {
+  min-height: 100dvh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(0.65rem, 2dvh, 1.25rem) 1.25rem
+    clamp(0.7rem, 2dvh, 1.35rem);
+}
+
+.vocali-session-prompt-card {
+  margin-top: clamp(0.45rem, 1.5dvh, 1.3rem);
+  border-radius: clamp(1.25rem, 5vw, 2rem);
+  padding: clamp(0.75rem, 1.7dvh, 1.15rem);
+}
+
+.vocali-session-chip-row {
+  gap: clamp(0.35rem, 1.2dvh, 0.5rem);
+}
+
+.vocali-session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  font-size: clamp(0.65rem, 1.45dvh, 0.75rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.vocali-session-chip--teal {
+  background: rgb(0 167 165 / 0.09);
+  color: var(--vocali-teal);
+}
+
+.vocali-session-chip--orange {
+  background: rgb(255 122 26 / 0.1);
+  color: #d65d0a;
+}
+
+.vocali-session-chip--dark-teal {
+  background: rgb(255 255 255 / 0.11);
+  color: #a8ebe6;
+}
+
+.vocali-session-chip--dark-orange {
+  background: rgb(255 122 26 / 0.17);
+  color: #ffd7ba;
+}
+
+.vocali-session-eyebrow {
+  margin-top: clamp(0.4rem, 1.25dvh, 1rem);
+  font-size: clamp(0.68rem, 1.6dvh, 0.875rem);
+}
+
+.vocali-session-prompt-title {
+  margin-top: clamp(0.3rem, 0.9dvh, 0.5rem);
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: clamp(1rem, 2.65dvh, 1.85rem);
+  line-height: 1.08;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.vocali-session-center {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(0.35rem, 1.45dvh, 1.25rem);
+  text-align: center;
+}
+
+.vocali-session-action {
+  min-height: 3rem;
+  height: clamp(3rem, 6.4dvh, 3.75rem);
+}
+
+.vocali-ring-plan {
+  width: clamp(8rem, 26dvh, 12.5rem);
+  height: clamp(8rem, 26dvh, 12.5rem);
+}
+
+.vocali-ring-plan-inner {
+  width: clamp(6rem, 19.5dvh, 9.5rem);
+  height: clamp(6rem, 19.5dvh, 9.5rem);
+}
+
+.vocali-ring-countdown {
+  width: clamp(8.75rem, 28dvh, 13.25rem);
+  height: clamp(8.75rem, 28dvh, 13.25rem);
+}
+
+.vocali-ring-countdown-inner {
+  width: clamp(6.75rem, 21.5dvh, 10.25rem);
+  height: clamp(6.75rem, 21.5dvh, 10.25rem);
+}
+
+.vocali-recording-stage {
+  width: clamp(9.25rem, 30dvh, 14.25rem);
+  height: clamp(9.25rem, 30dvh, 14.25rem);
+}
+
+.vocali-recording-ring {
+  inset: clamp(0.9rem, 3dvh, 1.25rem);
+}
+
+.vocali-recording-button {
+  width: clamp(5.85rem, 19dvh, 8.25rem);
+  height: clamp(5.85rem, 19dvh, 8.25rem);
+}
+
+.vocali-timer-number {
+  font-size: clamp(2.5rem, 8.2dvh, 4.2rem);
+  line-height: 0.95;
+}
+
+.vocali-countdown-number {
+  font-size: clamp(3.3rem, 11dvh, 5.6rem);
+  line-height: 0.95;
+}
+
+.vocali-session-heading {
+  font-size: clamp(1.35rem, 4.6dvh, 2.15rem);
+  line-height: 1.06;
+}
+
+@media (min-width: 640px) {
+  .vocali-session-timed {
+    min-height: 860px;
+    height: 860px;
+  }
+}
+
+@media (max-height: 740px) {
+  .vocali-session-timed {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .vocali-session-prompt-title {
+    -webkit-line-clamp: 2;
+  }
+
+  .vocali-session-prompt-card {
+    padding: 0.72rem;
+  }
+
+  .vocali-session-chip {
+    padding: 0.25rem 0.55rem;
+  }
+
+  .vocali-session-chip-row .vocali-session-chip:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (max-height: 680px) {
+  .vocali-session-eyebrow,
+  .vocali-session-helper {
+    display: none;
+  }
+
+  .vocali-session-prompt-card {
+    margin-top: 0.4rem;
+  }
+
+  .vocali-session-center {
+    padding-block: 0.25rem;
+  }
+
+  .vocali-session-prompt-title {
+    font-size: 0.98rem;
+    line-height: 1.04;
+  }
+
+  .vocali-session-action {
+    min-height: 2.85rem;
+    height: 2.85rem;
+  }
+
+  .vocali-ring-plan {
+    width: 7.55rem;
+    height: 7.55rem;
+  }
+
+  .vocali-ring-plan-inner {
+    width: 5.65rem;
+    height: 5.65rem;
+  }
+
+  .vocali-ring-countdown {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .vocali-ring-countdown-inner {
+    width: 6.15rem;
+    height: 6.15rem;
+  }
+
+  .vocali-recording-stage {
+    width: 8.6rem;
+    height: 8.6rem;
+  }
+
+  .vocali-recording-button {
+    width: 5.35rem;
+    height: 5.35rem;
+  }
+
+  .vocali-timer-number {
+    font-size: 2.35rem;
+  }
+
+  .vocali-countdown-number {
+    font-size: 3rem;
+  }
+}
+
