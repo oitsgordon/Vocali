@@ -132,6 +132,19 @@ a {
   height: clamp(3rem, 6.4dvh, 3.75rem);
 }
 
+.vocali-session-status {
+  line-height: 1.15;
+}
+
+.vocali-session-body,
+.vocali-planning-instruction {
+  line-height: 1.35;
+}
+
+.vocali-speaking-actions {
+  flex-shrink: 0;
+}
+
 .vocali-ring-plan {
   width: clamp(8rem, 26dvh, 12.5rem);
   height: clamp(8rem, 26dvh, 12.5rem);
@@ -209,9 +222,22 @@ a {
   .vocali-session-chip-row .vocali-session-chip:nth-child(n + 2) {
     display: none;
   }
+
+  .vocali-session-status {
+    margin-top: 0.75rem;
+  }
+
+  .vocali-session-body,
+  .vocali-planning-instruction {
+    margin-top: 0.6rem;
+  }
 }
 
 @media (max-height: 680px) {
+  .vocali-session-timed {
+    padding: 0.5rem 1rem 0.55rem;
+  }
+
   .vocali-session-eyebrow,
   .vocali-session-helper {
     display: none;
@@ -219,20 +245,45 @@ a {
 
   .vocali-session-prompt-card {
     margin-top: 0.4rem;
+    border-radius: 1.2rem;
+    padding: 0.62rem;
   }
 
   .vocali-session-center {
-    padding-block: 0.25rem;
+    padding-block: 0.15rem;
   }
 
   .vocali-session-prompt-title {
-    font-size: 0.98rem;
+    font-size: 0.92rem;
     line-height: 1.04;
   }
 
+  .vocali-session-chip-row {
+    gap: 0.25rem;
+  }
+
+  .vocali-session-chip {
+    padding: 0.22rem 0.48rem;
+    font-size: 0.62rem;
+  }
+
+  .vocali-session-status {
+    margin-top: 0.45rem;
+    font-size: 0.86rem;
+  }
+
+  .vocali-session-body,
+  .vocali-planning-instruction {
+    margin-top: 0.42rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
   .vocali-session-action {
-    min-height: 2.85rem;
-    height: 2.85rem;
+    min-height: 2.65rem;
+    height: 2.65rem;
+    border-radius: 0.95rem;
+    font-size: 0.98rem;
   }
 
   .vocali-ring-plan {
@@ -271,6 +322,205 @@ a {
 
   .vocali-countdown-number {
     font-size: 3rem;
+  }
+
+  .vocali-speaking-actions {
+    gap: 0.45rem;
+  }
+
+  .vocali-speaking-actions > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.45rem;
+  }
+
+  .vocali-replay-card {
+    padding: 0.62rem;
+    border-radius: 0.85rem;
+  }
+
+  .vocali-replay-card p:first-child {
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  .vocali-replay-helper {
+    display: none;
+  }
+}
+
+@media (max-height: 620px) {
+  .vocali-session-timed {
+    padding: 0.4rem 0.9rem 0.45rem;
+  }
+
+  .vocali-session-prompt-card {
+    margin-top: 0.25rem;
+    padding: 0.52rem;
+  }
+
+  .vocali-session-prompt-title {
+    font-size: 0.86rem;
+    line-height: 1.02;
+  }
+
+  .vocali-ring-plan {
+    width: 6.9rem;
+    height: 6.9rem;
+  }
+
+  .vocali-ring-plan-inner {
+    width: 5.15rem;
+    height: 5.15rem;
+  }
+
+  .vocali-ring-countdown {
+    width: 7.25rem;
+    height: 7.25rem;
+  }
+
+  .vocali-ring-countdown-inner {
+    width: 5.55rem;
+    height: 5.55rem;
+  }
+
+  .vocali-recording-stage {
+    width: 7.75rem;
+    height: 7.75rem;
+  }
+
+  .vocali-recording-button {
+    width: 4.85rem;
+    height: 4.85rem;
+  }
+
+  .vocali-timer-number {
+    font-size: 2.05rem;
+  }
+
+  .vocali-countdown-number {
+    font-size: 2.65rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .vocali-streak-screen {
+    padding: 0.7rem 1.25rem 0.8rem;
+  }
+
+  .vocali-streak-header {
+    height: 1.8rem;
+  }
+
+  .vocali-streak-content {
+    padding-block: 0.35rem;
+  }
+
+  .vocali-streak-flame-shell {
+    width: clamp(7.9rem, 23dvh, 11rem);
+    height: clamp(7.9rem, 23dvh, 11rem);
+  }
+
+  .vocali-streak-flame-core {
+    width: clamp(6.35rem, 18.5dvh, 8.7rem);
+    height: clamp(6.35rem, 18.5dvh, 8.7rem);
+  }
+
+  .vocali-streak-flame {
+    width: clamp(3.7rem, 10.5dvh, 5.4rem);
+    height: clamp(3.7rem, 10.5dvh, 5.4rem);
+  }
+
+  .vocali-streak-heading {
+    margin-top: 0.85rem;
+    font-size: clamp(1.65rem, 4.2dvh, 2.05rem);
+  }
+
+  .vocali-streak-stat {
+    margin-top: 0.65rem;
+  }
+
+  .vocali-streak-stat span:first-child {
+    font-size: clamp(3rem, 8.4dvh, 4.1rem);
+  }
+
+  .vocali-streak-stat span:last-child {
+    font-size: clamp(1.55rem, 4.5dvh, 2.25rem);
+  }
+
+  .vocali-streak-support {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .vocali-streak-week {
+    margin-top: 0.85rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.9rem;
+  }
+
+  .vocali-streak-week > div {
+    gap: 0.28rem;
+  }
+
+  .vocali-streak-week span:first-child {
+    font-size: 0.62rem;
+  }
+
+  .vocali-streak-week span:last-child {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .vocali-streak-actions {
+    gap: 0.45rem;
+  }
+
+  .vocali-streak-actions > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.45rem;
+  }
+
+  .vocali-streak-actions a:first-child {
+    height: 3rem;
+    border-radius: 0.95rem;
+  }
+
+  .vocali-streak-actions a:last-child {
+    height: 2.55rem;
+    min-height: 2.55rem;
+    border-radius: 0.9rem;
+  }
+}
+
+@media (max-height: 620px) {
+  .vocali-streak-screen {
+    padding-top: 0.55rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .vocali-streak-header {
+    height: 1.55rem;
+  }
+
+  .vocali-streak-flame-shell {
+    width: 7.2rem;
+    height: 7.2rem;
+  }
+
+  .vocali-streak-flame-core {
+    width: 5.75rem;
+    height: 5.75rem;
+  }
+
+  .vocali-streak-flame {
+    width: 3.45rem;
+    height: 3.45rem;
+  }
+
+  .vocali-streak-heading {
+    margin-top: 0.65rem;
+  }
+
+  .vocali-streak-week {
+    margin-top: 0.65rem;
   }
 }
 

@@ -85,7 +85,7 @@ const recordingFailedMessage =
 const recordingSaveFailedMessage =
   "Recording could not be saved. Please try again.";
 const transcriptionFallbackMessage =
-  "Transcript preparation did not finish, but you can still continue with mock feedback.";
+  "Transcript preparation did not finish, but you can still continue with basic feedback.";
 const recorderMimeTypeCandidates = [
   "audio/webm;codecs=opus",
   "audio/webm",
@@ -959,7 +959,6 @@ export function PracticeSession({
       <MicrophoneSetupView
         {...backControls}
         challenge={challenge ?? challengePool[carouselIndex] ?? mockChallenges[0]}
-        errorMessage={recordingError}
         errorKind={recordingErrorKind}
         isPreparingRecording={isPreparingRecording}
         onRetry={() => void setupMicrophone()}
@@ -1181,7 +1180,7 @@ function ShuffleView({
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-vocali-teal text-white shadow-[0_18px_35px_rgb(0_167_165/0.24)]">
           <Shuffle className="h-8 w-8" strokeWidth={3} />
         </div>
-        <p className="mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
+        <p className="vocali-session-status mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
           {categoryLabel}
         </p>
         <h1 className="vocali-session-heading mt-2 font-black tracking-[-0.04em] text-vocali-teal-deep">
@@ -1280,9 +1279,6 @@ function PlanningView({
         <h1 className="vocali-session-prompt-title font-black tracking-[-0.04em]">
           {challenge.prompt}
         </h1>
-        <p className="vocali-session-helper mt-3 text-sm font-bold leading-5 text-white/78">
-          Think of your opening point and one example.
-        </p>
       </div>
 
       <div className="vocali-session-center">
@@ -1301,11 +1297,11 @@ function PlanningView({
             </span>
           </div>
         </SmoothTimerRing>
-        <p className="mt-5 text-lg font-black text-vocali-teal">
+        <p className="vocali-session-status mt-5 text-lg font-black text-vocali-teal">
           Plan your answer
         </p>
-        <p className="vocali-session-helper mt-2 max-w-xs text-sm font-bold leading-5 text-vocali-muted">
-          You do not need a script. Just choose a first sentence and one detail.
+        <p className="vocali-planning-instruction mt-2 max-w-xs text-sm font-bold text-vocali-muted">
+          Think of your opening point and one example.
         </p>
       </div>
 
@@ -1323,7 +1319,6 @@ function PlanningView({
 
 type MicrophoneSetupViewProps = {
   challenge: Challenge;
-  errorMessage: string | null;
   errorKind: RecordingErrorKind | null;
   isPreparingRecording: boolean;
   onRetry: () => void;
@@ -1334,36 +1329,29 @@ function MicrophoneSetupView({
   backLabel,
   onBackRequest,
   challenge,
-  errorMessage,
   errorKind,
   isPreparingRecording,
   onRetry,
 }: MicrophoneSetupViewProps) {
   const isRecordingProblem = errorKind === "recording";
   const isUnsupported = errorKind === "unsupported";
-  const statusLabel = isPreparingRecording
-    ? "Opening microphone"
-    : isRecordingProblem
-      ? "Recording not saved"
-      : isUnsupported
-        ? "Recording unavailable"
-        : "Microphone needed";
   const heading = isRecordingProblem
-    ? "Recording could not be saved."
+    ? "Recording didn't save"
     : isUnsupported
-      ? "Recording is not supported here yet."
-      : "Allow microphone access to record your answer.";
+      ? "Recording is not supported here"
+      : "Allow microphone access";
   const helper = isRecordingProblem
-    ? "Your microphone permission is okay. Try again and Vocali will start a fresh countdown."
-    : "The 3-second countdown will only start after permission is granted.";
-  const errorHeading = isRecordingProblem
-    ? "Recording needs attention"
-    : "Microphone needs attention";
+    ? "Your mic worked, but the replay could not be prepared. Try again."
+    : isUnsupported
+      ? "Try Safari, Chrome, or Edge on a secure HTTPS link."
+      : "Vocali needs your mic to record your answer.";
   const retryLabel = isPreparingRecording
     ? "Opening mic..."
-    : isRecordingProblem
-      ? "Try recording again"
-      : "Try microphone again";
+    : isUnsupported
+      ? "Back to practice"
+      : "Try again";
+  const actionClassName =
+    "vocali-session-action flex w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)] disabled:opacity-70";
 
   return (
     <section className="vocali-session-timed">
@@ -1374,14 +1362,6 @@ function MicrophoneSetupView({
       />
 
       <div className="vocali-session-prompt-card bg-white shadow-vocali-card">
-        <div className="vocali-session-chip-row flex flex-wrap">
-          <span className="vocali-session-chip vocali-session-chip--orange">
-            Mic setup
-          </span>
-          <span className="vocali-session-chip vocali-session-chip--teal">
-            Recording starts after countdown
-          </span>
-        </div>
         <p className="vocali-session-eyebrow font-black uppercase tracking-[0.12em] text-vocali-muted">
           Speaking prompt
         </p>
@@ -1394,37 +1374,30 @@ function MicrophoneSetupView({
         <div className="flex h-[clamp(8rem,28dvh,11rem)] w-[clamp(8rem,28dvh,11rem)] items-center justify-center rounded-full bg-white text-vocali-orange shadow-vocali-card">
           <Mic className="h-[clamp(3.5rem,12dvh,5rem)] w-[clamp(3.5rem,12dvh,5rem)]" strokeWidth={3} />
         </div>
-        <p className="mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
-          {statusLabel}
-        </p>
-        <h2 className="vocali-session-heading mt-2 max-w-xs font-black tracking-[-0.04em] text-vocali-teal-deep">
+        <h2 className="vocali-session-heading mt-5 max-w-xs font-black tracking-[-0.04em] text-vocali-teal-deep">
           {heading}
         </h2>
-        <p className="vocali-session-helper mt-3 max-w-xs text-sm font-bold leading-5 text-vocali-muted">
+        <p className="vocali-session-body mt-3 max-w-xs text-sm font-bold leading-5 text-vocali-muted">
           {helper}
         </p>
-
-        {errorMessage ? (
-          <div className="mt-5 rounded-[1.25rem] border-2 border-vocali-orange/30 bg-white p-4 text-left shadow-[0_10px_24px_rgb(7_50_71/0.08)]">
-            <p className="text-sm font-black text-vocali-orange">
-              {errorHeading}
-            </p>
-            <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
-              {errorMessage}
-            </p>
-          </div>
-        ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={onRetry}
-        disabled={isPreparingRecording}
-        className="vocali-session-action flex w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)] disabled:opacity-70"
-      >
-        <Mic className="h-6 w-6" strokeWidth={3} />
-        {retryLabel}
-      </button>
+      {isUnsupported ? (
+        <Link href="/practice" className={actionClassName}>
+          {retryLabel}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={isPreparingRecording}
+          aria-label={retryLabel}
+          className={actionClassName}
+        >
+          <Mic className="h-6 w-6" strokeWidth={3} />
+          {retryLabel}
+        </button>
+      )}
     </section>
   );
 }
@@ -1483,7 +1456,7 @@ function CountdownView({
             </span>
           </div>
         </SmoothTimerRing>
-        <p className="mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
+        <p className="vocali-session-status mt-5 text-sm font-black uppercase tracking-[0.14em] text-vocali-teal">
           Get ready
         </p>
         <h2 className="vocali-session-heading mt-2 font-black tracking-[-0.04em] text-vocali-teal-deep">
@@ -1764,7 +1737,7 @@ function SpeakingView({
             </p>
           </>
         )}
-        <p className={isStoppedPhase ? "mt-2 text-base font-black text-vocali-teal" : "mt-1 text-base font-black text-vocali-teal"}>
+        <p className={`vocali-session-status text-base font-black text-vocali-teal ${isStoppedPhase ? "mt-2" : "mt-1"}`}>
           {isPreparingRecording
             ? "Opening mic"
             : isStoppingRecording
@@ -1829,14 +1802,14 @@ function SpeakingActions({
 }: SpeakingActionsProps) {
   if (phase === "stopped") {
     return (
-      <div className="space-y-2.5">
+      <div className="vocali-speaking-actions space-y-2.5">
         {audioUrl ? (
-          <div className="rounded-[1rem] bg-white p-3 shadow-[0_10px_24px_rgb(7_50_71/0.08)]">
+          <div className="vocali-replay-card rounded-[1rem] bg-white p-3 shadow-[0_10px_24px_rgb(7_50_71/0.08)]">
             <p className="mb-2 text-sm font-black text-vocali-teal-deep">
               Your recording
             </p>
             <audio controls src={audioUrl} className="w-full" />
-            <p className="mt-2 text-xs font-bold leading-4 text-vocali-muted">
+            <p className="vocali-replay-helper mt-2 text-xs font-bold leading-4 text-vocali-muted">
               Listen back once, then submit when you&apos;re ready.
             </p>
           </div>
@@ -1921,8 +1894,8 @@ function TranscribingView({
           Turning your recording into text.
         </h1>
         <p className="mt-4 max-w-xs text-base font-bold leading-6 text-vocali-muted">
-          Your audio is being sent for transcription only. Mock feedback will
-          still appear if this step fails.
+          Your audio is being sent for transcription only. Vocali will still
+          show limited feedback if this step fails.
         </p>
       </div>
     </section>

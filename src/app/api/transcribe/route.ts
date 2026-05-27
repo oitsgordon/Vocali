@@ -273,7 +273,7 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
-        error: "Transcription failed. You can still continue with mock feedback.",
+        error: "Transcription failed. You can still continue with basic feedback.",
       },
       502,
     );

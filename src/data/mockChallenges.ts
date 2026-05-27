@@ -212,7 +212,7 @@ const dailyChallengePrompts: Array<PromptSeed & { category: PromptCategory }> = 
   {
     id: "daily-why-music",
     category: "Explain An Idea",
-    prompt: "Explain why people like music.",
+    prompt: "Talk about a song or sound that changes your mood.",
     tags: ["Daily challenge", "Clarity"],
   },
   {
@@ -254,7 +254,7 @@ const dailyChallengePrompts: Array<PromptSeed & { category: PromptCategory }> = 
   {
     id: "daily-useful-advice",
     category: "Explain An Idea",
-    prompt: "What makes advice useful?",
+    prompt: "Describe a piece of advice that is easy to remember.",
     tags: ["Daily challenge", "Clarity"],
   },
   {
@@ -330,7 +330,7 @@ const talkAboutYourselfPrompts: PromptSeed[] = [
   },
   {
     id: "talk-learned-hard-way",
-    prompt: "What is something you learned the hard way?",
+    prompt: "What is something you learned from trying something new?",
     tags: ["Storytelling"],
   },
   {
@@ -375,7 +375,7 @@ const talkAboutYourselfPrompts: PromptSeed[] = [
   },
   {
     id: "talk-wish-known",
-    prompt: "What is something you wish more people knew about you?",
+    prompt: "What is something you would like people to know about you?",
     tags: ["Confidence"],
   },
 ];
@@ -393,7 +393,7 @@ const thinkOnTheSpotPrompts: PromptSeed[] = [
   },
   {
     id: "spot-public-transport",
-    prompt: "What would make public transport better?",
+    prompt: "What would make waiting in a queue less boring?",
     tags: ["Ideas"],
   },
   {
@@ -403,7 +403,7 @@ const thinkOnTheSpotPrompts: PromptSeed[] = [
   },
   {
     id: "spot-shared-spaces",
-    prompt: "What is one rule everyone should follow in shared spaces?",
+    prompt: "What is one small rule that makes shared spaces nicer?",
     tags: ["Opinion"],
   },
   {
@@ -453,7 +453,7 @@ const thinkOnTheSpotPrompts: PromptSeed[] = [
   },
   {
     id: "spot-overcomplicate",
-    prompt: "What is something people overcomplicate?",
+    prompt: "What is something simple that people sometimes make too complicated?",
     tags: ["Opinion"],
   },
   {
@@ -473,7 +473,7 @@ const thinkOnTheSpotPrompts: PromptSeed[] = [
   },
   {
     id: "spot-trend-understand",
-    prompt: "What is one trend you do or do not understand?",
+    prompt: "What is something popular that you find interesting?",
     tags: ["Opinion"],
   },
   {
@@ -486,102 +486,102 @@ const thinkOnTheSpotPrompts: PromptSeed[] = [
 const explainAnIdeaPrompts: PromptSeed[] = [
   {
     id: "idea-favourite-hobby",
-    prompt: "Explain how a favourite hobby works to a beginner.",
+    prompt: "Talk someone through how your favourite hobby works.",
     tags: ["Clarity"],
   },
   {
     id: "idea-sleep-matters",
-    prompt: "Explain why sleep matters.",
+    prompt: "Describe why a good night of sleep can change someone’s day.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-conversation",
-    prompt: "Explain what makes a conversation enjoyable.",
+    prompt: "Describe what makes a conversation enjoyable.",
     tags: ["Social confidence"],
   },
   {
     id: "idea-habit",
-    prompt: "Explain a habit you think more people should try.",
+    prompt: "Talk through a habit you think more people should try.",
     tags: ["Clarity"],
   },
   {
     id: "idea-organise-day",
-    prompt: "Explain how you organise your day.",
+    prompt: "Talk someone through how you organise your day.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-music-mood",
-    prompt: "Explain why music can affect mood.",
+    prompt: "Describe how music can affect someone’s mood.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-good-team",
-    prompt: "Explain what makes a good team.",
+    prompt: "Describe what helps a team work well together.",
     tags: ["Clarity"],
   },
   {
     id: "idea-routines",
-    prompt: "Explain why people enjoy routines.",
+    prompt: "Talk about why routines can feel useful.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-first-impressions",
-    prompt: "Explain why first impressions matter.",
+    prompt: "Describe why first impressions can shape a conversation.",
     tags: ["Social confidence"],
   },
   {
     id: "idea-good-teacher",
-    prompt: "Explain what makes a good teacher.",
+    prompt: "Describe what makes someone easy to learn from.",
     tags: ["Clarity"],
   },
   {
     id: "idea-breaks-productivity",
-    prompt: "Explain why breaks can help productivity.",
+    prompt: "Talk through how taking a short break can help someone focus.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-story-interesting",
-    prompt: "Explain what makes a story interesting.",
+    prompt: "Describe what makes a story interesting to listen to.",
     tags: ["Clarity"],
   },
   {
     id: "idea-start-exercising",
-    prompt: "Explain how someone can start exercising slowly.",
+    prompt: "Talk someone through a gentle way to start exercising.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-confidence-practice",
-    prompt: "Explain why confidence grows with practice.",
+    prompt: "Describe how confidence can grow through small practice reps.",
     tags: ["Confidence"],
   },
   {
     id: "idea-listening-important",
-    prompt: "Explain why listening is important.",
+    prompt: "Describe what good listening looks like in a conversation.",
     tags: ["Social confidence"],
   },
   {
     id: "idea-busy-day",
-    prompt: "Explain how to prepare for a busy day.",
+    prompt: "Talk someone through how to prepare for a busy day.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-new-difficult",
-    prompt: "Explain why trying something new can feel difficult.",
+    prompt: "Describe why trying something new can feel difficult at first.",
     tags: ["Confidence"],
   },
   {
     id: "idea-easy-understand",
-    prompt: "Explain what makes an idea easy to understand.",
+    prompt: "Describe the difference between a clear explanation and a confusing one.",
     tags: ["Clarity"],
   },
   {
     id: "idea-learning-new",
-    prompt: "Explain why people enjoy learning new things.",
+    prompt: "Talk about why learning something new can feel rewarding.",
     tags: ["Everyday speaking"],
   },
   {
     id: "idea-advice-helpful",
-    prompt: "Explain what makes advice helpful.",
+    prompt: "Describe what makes advice easy to use.",
     tags: ["Clarity"],
   },
 ];
@@ -738,7 +738,7 @@ const interviewPracticePrompts: PromptSeed[] = [
   },
   {
     id: "interview-choose-you",
-    prompt: "Why should someone choose you?",
+    prompt: "What would you bring to a team?",
     type: "interview",
     difficulty: "Intermediate",
     tags: ["Secondary mode"],
