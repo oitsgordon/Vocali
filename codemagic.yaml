@@ -1,6 +1,16 @@
 # Codemagic workflow for Vocali's Capacitor iOS wrapper.
-# This first workflow validates that the iOS project builds in the cloud without
-# requiring Apple code signing. Add signing later when you are ready for TestFlight.
+#
+# Current purpose:
+# - Build the Capacitor iOS shell in the cloud.
+# - Load Vocali from the hosted Vercel production URL.
+# - Avoid Apple code signing until App Store Connect credentials are ready.
+#
+# Signing placeholders to configure later in Codemagic, not in this file:
+# - Apple Developer Team ID
+# - App Store Connect API key
+# - iOS signing certificate
+# - provisioning profile
+# - TestFlight/App Store export method
 
 workflows:
   ios-capacitor-cloud-build:
@@ -11,8 +21,16 @@ workflows:
       vars:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.vocali.app"
         CAPACITOR_SERVER_URL: "https://vocali-zeta.vercel.app/"
+        APPLE_TEAM_ID: "REPLACE_WITH_APPLE_DEVELOPER_TEAM_ID_WHEN_SIGNING"
     scripts:
+      - name: Show build configuration
+        script: |
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "Xcode project: $XCODE_PROJECT"
+          echo "Xcode scheme: $XCODE_SCHEME"
+          echo "Capacitor server URL: $CAPACITOR_SERVER_URL"
       - name: Install npm dependencies
         script: |
           npm ci
@@ -22,7 +40,7 @@ workflows:
           npm run build
       - name: Sync Capacitor iOS project
         script: |
-          npm run cap:sync:ios
+          npx cap sync ios
       - name: Build unsigned iOS simulator app
         script: |
           xcodebuild build \
