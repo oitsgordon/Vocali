@@ -1,0 +1,81 @@
+<svg width="1400" height="1000" viewBox="0 0 1400 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="1000" rx="48" fill="#F7F1E6"/>
+  <text x="70" y="86" fill="#07394A" font-family="Arial, sans-serif" font-size="42" font-weight="800">Vocali logo mark options</text>
+  <text x="70" y="128" fill="#607086" font-family="Arial, sans-serif" font-size="24" font-weight="600">Each waveform is centered on the round body of the speech bubble, not the tail.</text>
+
+  <defs>
+    <linearGradient id="bubbleGradient" x1="268" y1="239" x2="767" y2="735" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00B9B5"/>
+      <stop offset="1" stop-color="#008F8D"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#00A7A5" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(70 180)">
+    <rect width="600" height="330" rx="44" fill="white"/>
+    <text x="34" y="58" fill="#07394A" font-family="Arial, sans-serif" font-size="32" font-weight="800">A. Balanced</text>
+    <text x="34" y="96" fill="#607086" font-family="Arial, sans-serif" font-size="20" font-weight="600">Best default: clear, centred, readable small.</text>
+    <g transform="translate(32 116) scale(0.19)" filter="url(#softShadow)">
+      <path d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z" fill="url(#bubbleGradient)"/>
+      <ellipse cx="512" cy="481" rx="328" ry="301" fill="url(#bubbleGradient)"/>
+      <rect x="311" y="426" width="42" height="110" rx="21" fill="white"/>
+      <rect x="398" y="366" width="48" height="230" rx="24" fill="white"/>
+      <rect x="487" y="316" width="50" height="330" rx="25" fill="white"/>
+      <rect x="578" y="366" width="48" height="230" rx="24" fill="white"/>
+      <rect x="671" y="426" width="42" height="110" rx="21" fill="white"/>
+    </g>
+    <text x="212" y="244" fill="#07394A" font-family="Arial, sans-serif" font-size="62" font-weight="900">Vocali</text>
+  </g>
+
+  <g transform="translate(730 180)">
+    <rect width="600" height="330" rx="44" fill="white"/>
+    <text x="34" y="58" fill="#07394A" font-family="Arial, sans-serif" font-size="32" font-weight="800">B. Softer</text>
+    <text x="34" y="96" fill="#607086" font-family="Arial, sans-serif" font-size="20" font-weight="600">Smaller waveform, calmer and friendlier.</text>
+    <g transform="translate(32 116) scale(0.19)" filter="url(#softShadow)">
+      <path d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z" fill="url(#bubbleGradient)"/>
+      <ellipse cx="512" cy="481" rx="328" ry="301" fill="url(#bubbleGradient)"/>
+      <rect x="307" y="433" width="38" height="96" rx="19" fill="white"/>
+      <rect x="397" y="386" width="44" height="190" rx="22" fill="white"/>
+      <rect x="489" y="341" width="46" height="280" rx="23" fill="white"/>
+      <rect x="583" y="386" width="44" height="190" rx="22" fill="white"/>
+      <rect x="679" y="433" width="38" height="96" rx="19" fill="white"/>
+    </g>
+    <text x="212" y="244" fill="#07394A" font-family="Arial, sans-serif" font-size="62" font-weight="900">Vocali</text>
+  </g>
+
+  <g transform="translate(70 570)">
+    <rect width="600" height="330" rx="44" fill="white"/>
+    <text x="34" y="58" fill="#07394A" font-family="Arial, sans-serif" font-size="32" font-weight="800">C. Detailed</text>
+    <text x="34" y="96" fill="#607086" font-family="Arial, sans-serif" font-size="20" font-weight="600">Seven bars, more audio-like, still centred.</text>
+    <g transform="translate(32 116) scale(0.19)" filter="url(#softShadow)">
+      <path d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z" fill="url(#bubbleGradient)"/>
+      <ellipse cx="512" cy="481" rx="328" ry="301" fill="url(#bubbleGradient)"/>
+      <rect x="290" y="436" width="32" height="90" rx="16" fill="white"/>
+      <rect x="355" y="406" width="38" height="150" rx="19" fill="white"/>
+      <rect x="422" y="366" width="42" height="230" rx="21" fill="white"/>
+      <rect x="488" y="316" width="48" height="330" rx="24" fill="white"/>
+      <rect x="560" y="366" width="42" height="230" rx="21" fill="white"/>
+      <rect x="631" y="406" width="38" height="150" rx="19" fill="white"/>
+      <rect x="702" y="436" width="32" height="90" rx="16" fill="white"/>
+    </g>
+    <text x="212" y="244" fill="#07394A" font-family="Arial, sans-serif" font-size="62" font-weight="900">Vocali</text>
+  </g>
+
+  <g transform="translate(730 570)">
+    <rect width="600" height="330" rx="44" fill="white"/>
+    <text x="34" y="58" fill="#07394A" font-family="Arial, sans-serif" font-size="32" font-weight="800">D. Bold</text>
+    <text x="34" y="96" fill="#607086" font-family="Arial, sans-serif" font-size="20" font-weight="600">Tall central bar, strongest app-icon read.</text>
+    <g transform="translate(32 116) scale(0.19)" filter="url(#softShadow)">
+      <path d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z" fill="url(#bubbleGradient)"/>
+      <ellipse cx="512" cy="481" rx="328" ry="301" fill="url(#bubbleGradient)"/>
+      <rect x="318" y="430" width="36" height="102" rx="18" fill="white"/>
+      <rect x="404" y="374" width="44" height="214" rx="22" fill="white"/>
+      <rect x="487" y="298" width="50" height="366" rx="25" fill="white"/>
+      <rect x="576" y="374" width="44" height="214" rx="22" fill="white"/>
+      <rect x="670" y="430" width="36" height="102" rx="18" fill="white"/>
+    </g>
+    <text x="212" y="244" fill="#07394A" font-family="Arial, sans-serif" font-size="62" font-weight="900">Vocali</text>
+  </g>
+</svg>

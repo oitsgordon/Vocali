@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="224" fill="#F7F1E6"/>
+  <path d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z" fill="url(#bubbleGradient)"/>
+  <ellipse cx="512" cy="481" rx="328" ry="301" fill="url(#bubbleGradient)"/>
+  <rect x="311" y="426" width="42" height="110" rx="21" fill="white"/>
+  <rect x="398" y="366" width="48" height="230" rx="24" fill="white"/>
+  <rect x="487" y="316" width="50" height="330" rx="25" fill="white"/>
+  <rect x="578" y="366" width="48" height="230" rx="24" fill="white"/>
+  <rect x="671" y="426" width="42" height="110" rx="21" fill="white"/>
+  <defs>
+    <linearGradient id="bubbleGradient" x1="268" y1="239" x2="767" y2="735" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00B9B5"/>
+      <stop offset="1" stop-color="#008F8D"/>
+    </linearGradient>
+  </defs>
+</svg>

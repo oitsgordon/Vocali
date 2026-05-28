@@ -1,0 +1,30 @@
+{
+  "name": "Vocali",
+  "short_name": "Vocali",
+  "description": "Daily speaking prompts for confidence, self-expression, and thinking on the spot.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7F1E6",
+  "theme_color": "#00A7A5",
+  "icons": [
+    {
+      "src": "/icons/vocali-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/vocali-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/vocali-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
