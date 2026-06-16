@@ -11,6 +11,9 @@ const config: CapacitorConfig = {
     url: serverUrl,
     cleartext: false,
   },
+  ios: {
+    allowsLinkPreview: false,
+  },
 };
 
 export default config;
