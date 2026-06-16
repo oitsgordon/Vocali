@@ -1,29 +1,30 @@
 # Codemagic workflow for Vocali's Capacitor iOS wrapper.
 #
 # Current purpose:
-# - Build the Capacitor iOS shell in the cloud.
+# - Build a signed App Store IPA for TestFlight.
 # - Load Vocali from the hosted Vercel production URL.
-# - Avoid Apple code signing until App Store Connect credentials are ready.
 #
-# Signing placeholders to configure later in Codemagic, not in this file:
-# - Apple Developer Team ID
-# - App Store Connect API key
-# - iOS signing certificate
-# - provisioning profile
-# - TestFlight/App Store export method
+# Signing requirements to configure in Codemagic:
+# - Apple Developer Portal integration named below
+# - Apple Distribution certificate
+# - App Store provisioning profile for com.vocali.app
 
 workflows:
   ios-capacitor-cloud-build:
     name: iOS Capacitor cloud build
     max_build_duration: 60
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.vocali.app
       vars:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.vocali.app"
         CAPACITOR_SERVER_URL: "https://vocali-zeta.vercel.app/"
-        APPLE_TEAM_ID: "REPLACE_WITH_APPLE_DEVELOPER_TEAM_ID_WHEN_SIGNING"
     scripts:
       - name: Show build configuration
         script: |
@@ -41,14 +42,24 @@ workflows:
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
-      - name: Build unsigned iOS simulator app
+      - name: Set up code signing settings on Xcode project
         script: |
-          xcodebuild build \
-            -project "$XCODE_PROJECT" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            CODE_SIGNING_ALLOWED=NO
+          xcode-project use-profiles \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Build signed App Store IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
     artifacts:
-      - ~/Library/Developer/Xcode/DerivedData/**/Build/Products/**/*.app
-      - ~/Library/Developer/Xcode/DerivedData/**/Logs/**/*.xcactivitylog
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Logs/**/*.xcactivitylog
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
