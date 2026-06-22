@@ -42,6 +42,31 @@ workflows:
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
+      - name: Set iOS build number
+        script: |
+          IOS_BUILD_NUMBER=$((${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}} + 100))
+          PBXPROJ="$CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj"
+
+          echo "Using iOS build number: $IOS_BUILD_NUMBER"
+          echo "IOS_BUILD_NUMBER=$IOS_BUILD_NUMBER" >> "$CM_ENV"
+
+          export IOS_BUILD_NUMBER
+          perl -0pi -e 's/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = $ENV{"IOS_BUILD_NUMBER"};/g' "$PBXPROJ"
+
+          UPDATED_COUNT=$(grep -c "CURRENT_PROJECT_VERSION = $IOS_BUILD_NUMBER;" "$PBXPROJ")
+          if [ "$UPDATED_COUNT" -lt 2 ]; then
+            echo "Expected to update both CURRENT_PROJECT_VERSION entries, but found $UPDATED_COUNT."
+            grep "CURRENT_PROJECT_VERSION" "$PBXPROJ" || true
+            exit 1
+          fi
+
+          if grep -q "CURRENT_PROJECT_VERSION = 1;" "$PBXPROJ"; then
+            echo "CURRENT_PROJECT_VERSION is still 1 after update."
+            grep "CURRENT_PROJECT_VERSION" "$PBXPROJ"
+            exit 1
+          fi
+
+          grep "CURRENT_PROJECT_VERSION" "$PBXPROJ"
       - name: Set up code signing settings on Xcode project
         script: |
           xcode-project use-profiles \
@@ -49,8 +74,6 @@ workflows:
             --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Build signed App Store IPA
         script: |
-          IOS_BUILD_NUMBER="${IOS_BUILD_NUMBER:-${PROJECT_BUILD_NUMBER:-$BUILD_NUMBER}}"
-
           if [ -z "$IOS_BUILD_NUMBER" ]; then
             echo "No Codemagic build number was available for CFBundleVersion."
             exit 1
@@ -61,6 +84,34 @@ workflows:
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --archive-xcargs "CURRENT_PROJECT_VERSION=$IOS_BUILD_NUMBER"
+      - name: Verify IPA build number
+        script: |
+          IPA_PATH=$(find "$CM_BUILD_DIR/build/ios/ipa" -name "*.ipa" -print -quit)
+
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found to verify."
+            exit 1
+          fi
+
+          rm -rf /tmp/vocali-ipa-check
+          mkdir -p /tmp/vocali-ipa-check
+          unzip -q "$IPA_PATH" -d /tmp/vocali-ipa-check
+
+          INFO_PLIST=$(find /tmp/vocali-ipa-check/Payload -path "*.app/Info.plist" -print -quit)
+          if [ -z "$INFO_PLIST" ]; then
+            echo "No app Info.plist found inside IPA."
+            exit 1
+          fi
+
+          IPA_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST")
+
+          echo "IPA path: $IPA_PATH"
+          echo "IPA CFBundleVersion: $IPA_BUILD_NUMBER"
+
+          if [ "$IPA_BUILD_NUMBER" != "$IOS_BUILD_NUMBER" ]; then
+            echo "Expected IPA CFBundleVersion to be $IOS_BUILD_NUMBER."
+            exit 1
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
