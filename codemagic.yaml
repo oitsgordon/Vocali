@@ -49,7 +49,7 @@ workflows:
             --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Build signed App Store IPA
         script: |
-          IOS_BUILD_NUMBER="${IOS_BUILD_NUMBER:-${PROJECT_BUILD_NUMBER:-$BUILD_NUMBER}}"
+          IOS_BUILD_NUMBER="$((${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}} + 100))"
 
           if [ -z "$IOS_BUILD_NUMBER" ]; then
             echo "No Codemagic build number was available for CFBundleVersion."
