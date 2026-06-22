@@ -49,18 +49,12 @@ workflows:
             --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Build signed App Store IPA
         script: |
-          IOS_BUILD_NUMBER="$((${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}} + 100))"
+          echo "Committed iOS build numbers:"
+          grep "CURRENT_PROJECT_VERSION" "$CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj"
 
-          if [ -z "$IOS_BUILD_NUMBER" ]; then
-            echo "No Codemagic build number was available for CFBundleVersion."
-            exit 1
-          fi
-
-          echo "Using iOS build number: $IOS_BUILD_NUMBER"
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "CURRENT_PROJECT_VERSION=$IOS_BUILD_NUMBER"
+            --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
