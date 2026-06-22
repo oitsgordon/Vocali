@@ -37,7 +37,7 @@ export default function AttemptDetailPage() {
   if (!attempt) {
     return (
       <ScreenFrame>
-        <section className="flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+        <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
           <AttemptHeader />
           <div className="flex flex-1 items-center justify-center">
             <p className="text-base font-black text-vocali-muted">
@@ -51,7 +51,7 @@ export default function AttemptDetailPage() {
 
   return (
     <ScreenFrame>
-      <section className="min-h-dvh px-5 pb-7 pt-7 sm:min-h-[860px]">
+      <section className="vocali-safe-top vocali-safe-bottom min-h-dvh px-5 pb-7 pt-7 sm:min-h-[860px]">
         <AttemptHeader />
 
         <div className="mt-7 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">
@@ -103,7 +103,7 @@ function AttemptHeader() {
       >
         <ArrowLeft className="h-5 w-5" strokeWidth={3} />
       </Link>
-      <VocaliLogo size="sm" />
+      <VocaliLogo size="xs" variant="mark" />
       <span className="rounded-full bg-vocali-teal/12 px-3 py-2 text-xs font-black text-vocali-teal">
         Attempt
       </span>
@@ -114,7 +114,7 @@ function AttemptHeader() {
 function MissingAttemptState() {
   return (
     <ScreenFrame>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+      <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
         <AttemptHeader />
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] bg-vocali-teal/12 text-vocali-teal">

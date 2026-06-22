@@ -92,7 +92,7 @@ export function OnboardingFlow() {
   }
 
   return (
-    <section className="flex min-h-dvh flex-col px-7 pb-7 pt-10 sm:min-h-[860px] sm:pt-12">
+    <section className="vocali-safe-top vocali-safe-top-loose vocali-safe-bottom flex min-h-dvh flex-col px-7 pb-7 pt-10 sm:min-h-[860px] sm:pt-12">
       <div className="flex items-center justify-between">
         <VocaliLogo size="sm" />
         <StepDots activeStep={step} />

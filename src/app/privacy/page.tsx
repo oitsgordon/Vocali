@@ -33,15 +33,20 @@ const privacySections = [
 export default function PrivacyPage() {
   return (
     <ScreenFrame>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+      <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
         <header className="flex items-center justify-between">
-          <VocaliLogo size="sm" />
+          <div className="flex items-center gap-2.5">
+            <VocaliLogo size="xs" variant="mark" />
+            <p className="text-base font-black text-vocali-teal-deep">
+              Privacy
+            </p>
+          </div>
           <span className="rounded-full bg-vocali-teal/12 px-4 py-2 text-sm font-black text-vocali-teal">
             Local-first MVP
           </span>
         </header>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <p className="text-lg font-black text-vocali-teal">Privacy</p>
           <h1 className="mt-2 text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
             Your practice stays close to you.

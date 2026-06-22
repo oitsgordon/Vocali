@@ -10,6 +10,8 @@
   --vocali-card: #ffffff;
   --vocali-muted: #64748b;
   --vocali-border: #bfedea;
+  --vocali-safe-area-top: env(safe-area-inset-top, 0px);
+  --vocali-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @theme inline {
@@ -39,6 +41,43 @@ a,
   -webkit-touch-callout: none;
 }
 
+.vocali-safe-top {
+  --vocali-safe-top-base: 1.75rem;
+  padding-top: max(
+    var(--vocali-safe-top-base),
+    calc(var(--vocali-safe-area-top) + 0.5rem)
+  );
+}
+
+.vocali-safe-top-tight {
+  --vocali-safe-top-base: 1.5rem;
+}
+
+.vocali-safe-top-loose {
+  --vocali-safe-top-base: 2.5rem;
+  --vocali-safe-top-sm-base: 3rem;
+}
+
+.vocali-safe-bottom {
+  --vocali-safe-bottom-base: 1.75rem;
+  padding-bottom: max(
+    var(--vocali-safe-bottom-base),
+    calc(var(--vocali-safe-area-bottom) + 0.5rem)
+  );
+}
+
+.vocali-bottom-nav {
+  padding-bottom: calc(1rem + var(--vocali-safe-area-bottom));
+}
+
+.vocali-nav-content {
+  padding-bottom: calc(4rem + var(--vocali-safe-area-bottom));
+}
+
+.vocali-safe-dialog {
+  padding-bottom: max(1.25rem, calc(var(--vocali-safe-area-bottom) + 0.5rem));
+}
+
 @property --timer-progress {
   syntax: "<percentage>";
   inherits: false;
@@ -54,12 +93,14 @@ a,
 }
 
 .vocali-session-timed {
+  box-sizing: border-box;
   min-height: 100dvh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: clamp(0.65rem, 2dvh, 1.25rem) 1.25rem
-    clamp(0.7rem, 2dvh, 1.35rem);
+  padding: max(clamp(0.65rem, 2dvh, 1.25rem), var(--vocali-safe-area-top))
+    1.25rem
+    max(clamp(0.7rem, 2dvh, 1.35rem), var(--vocali-safe-area-bottom));
 }
 
 .vocali-session-prompt-card {
@@ -196,17 +237,56 @@ a,
   line-height: 1.06;
 }
 
+.vocali-streak-screen {
+  box-sizing: border-box;
+  padding-top: max(1rem, var(--vocali-safe-area-top));
+  padding-bottom: max(1rem, var(--vocali-safe-area-bottom));
+}
+
 @media (min-width: 640px) {
+  .vocali-safe-top {
+    padding-top: var(
+      --vocali-safe-top-sm-base,
+      var(--vocali-safe-top-base)
+    );
+  }
+
+  .vocali-safe-bottom {
+    padding-bottom: var(
+      --vocali-safe-bottom-sm-base,
+      var(--vocali-safe-bottom-base)
+    );
+  }
+
+  .vocali-bottom-nav {
+    padding-bottom: 0.75rem;
+  }
+
+  .vocali-nav-content {
+    padding-bottom: 4rem;
+  }
+
+  .vocali-safe-dialog {
+    padding-bottom: 1.25rem;
+  }
+
   .vocali-session-timed {
     min-height: 860px;
     height: 860px;
+    padding: clamp(0.65rem, 2dvh, 1.25rem) 1.25rem
+      clamp(0.7rem, 2dvh, 1.35rem);
+  }
+
+  .vocali-streak-screen {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
   }
 }
 
 @media (max-height: 740px) {
   .vocali-session-timed {
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
+    padding-top: max(0.65rem, var(--vocali-safe-area-top));
+    padding-bottom: max(0.65rem, var(--vocali-safe-area-bottom));
   }
 
   .vocali-session-prompt-title {
@@ -237,7 +317,8 @@ a,
 
 @media (max-height: 680px) {
   .vocali-session-timed {
-    padding: 0.5rem 1rem 0.55rem;
+    padding: max(0.5rem, var(--vocali-safe-area-top)) 1rem
+      max(0.55rem, var(--vocali-safe-area-bottom));
   }
 
   .vocali-session-eyebrow,
@@ -351,7 +432,8 @@ a,
 
 @media (max-height: 620px) {
   .vocali-session-timed {
-    padding: 0.4rem 0.9rem 0.45rem;
+    padding: max(0.4rem, var(--vocali-safe-area-top)) 0.9rem
+      max(0.45rem, var(--vocali-safe-area-bottom));
   }
 
   .vocali-session-prompt-card {
@@ -405,7 +487,8 @@ a,
 
 @media (max-height: 700px) {
   .vocali-streak-screen {
-    padding: 0.7rem 1.25rem 0.8rem;
+    padding: max(0.7rem, var(--vocali-safe-area-top)) 1.25rem
+      max(0.8rem, var(--vocali-safe-area-bottom));
   }
 
   .vocali-streak-header {
@@ -494,8 +577,8 @@ a,
 
 @media (max-height: 620px) {
   .vocali-streak-screen {
-    padding-top: 0.55rem;
-    padding-bottom: 0.6rem;
+    padding-top: max(0.55rem, var(--vocali-safe-area-top));
+    padding-bottom: max(0.6rem, var(--vocali-safe-area-bottom));
   }
 
   .vocali-streak-header {

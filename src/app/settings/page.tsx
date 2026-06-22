@@ -13,7 +13,6 @@ import {
   Volume2,
 } from "lucide-react";
 import { useState } from "react";
-import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { clearAttempts } from "@/lib/attemptStorage";
 import { clearStoredDailyChallenge } from "@/lib/dailyChallenge";
@@ -229,7 +228,7 @@ function SettingsContent({
 
   return (
     <ScreenFrame>
-      <section className="flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+      <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
         <header className="flex items-center justify-between">
           <Link
             href="/profile"
@@ -238,11 +237,11 @@ function SettingsContent({
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={3} />
           </Link>
-          <VocaliLogo size="sm" />
+          <p className="text-base font-black text-vocali-teal-deep">Settings</p>
           <div className="h-11 w-11" />
         </header>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <p className="text-lg font-black text-vocali-teal">Settings</p>
           <h1 className="mt-2 text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
             Personalise Vocali.

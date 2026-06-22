@@ -188,7 +188,7 @@ export function PracticeHub({
   }
 
   return (
-    <div className="px-5 pb-8 pt-7">
+    <div className="vocali-safe-top px-5 pb-8 pt-7">
       <header>
         <p className="text-lg font-black text-vocali-teal">Practice</p>
         <h1 className="mt-2 text-[2.45rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">

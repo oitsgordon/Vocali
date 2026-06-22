@@ -29,12 +29,13 @@ export default function ProgressPage() {
 
   return (
     <ScreenFrame withNavPadding>
-      <section className="px-5 pb-8 pt-7">
-        <header className="flex items-center">
-          <VocaliLogo size="sm" />
+      <section className="vocali-safe-top px-5 pb-8 pt-7">
+        <header className="flex items-center gap-2.5">
+          <VocaliLogo size="xs" variant="mark" />
+          <p className="text-base font-black text-vocali-teal-deep">Progress</p>
         </header>
 
-        <div className="mt-7">
+        <div className="mt-5">
           <p className="text-lg font-black text-vocali-teal">Keep going</p>
           <h1 className="mt-2 text-[2.35rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
             Your speaking habit is taking shape.

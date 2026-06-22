@@ -6,7 +6,7 @@ import { ScreenFrame } from "@/components/layout/ScreenFrame";
 export default function LoginPage() {
   return (
     <ScreenFrame>
-      <section className="flex min-h-dvh flex-col px-7 pb-7 pt-10 text-center sm:min-h-[860px]">
+      <section className="vocali-safe-top vocali-safe-top-loose vocali-safe-bottom flex min-h-dvh flex-col px-7 pb-7 pt-10 text-center sm:min-h-[860px]">
         <div className="flex justify-center">
           <VocaliLogo size="sm" />
         </div>

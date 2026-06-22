@@ -19,12 +19,13 @@ export default function HomeDashboard() {
 
   return (
     <ScreenFrame withNavPadding>
-      <section className="px-5 pb-8 pt-7">
-        <header className="flex items-center">
-          <VocaliLogo size="sm" />
+      <section className="vocali-safe-top px-5 pb-8 pt-7">
+        <header className="flex items-center gap-2.5">
+          <VocaliLogo size="xs" variant="mark" />
+          <p className="text-base font-black text-vocali-teal-deep">Home</p>
         </header>
 
-        <p className="mt-7 text-lg font-black text-vocali-teal">
+        <p className="mt-5 text-lg font-black text-vocali-teal">
           Hi {greetingName}
         </p>
 

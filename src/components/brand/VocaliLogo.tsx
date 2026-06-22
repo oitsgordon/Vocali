@@ -1,20 +1,23 @@
 type VocaliLogoProps = {
-  size?: "sm" | "lg";
+  size?: "xs" | "sm" | "lg";
+  variant?: "full" | "mark";
 };
 
-export function VocaliLogo({ size = "lg" }: VocaliLogoProps) {
+export function VocaliLogo({ size = "lg", variant = "full" }: VocaliLogoProps) {
   const isLarge = size === "lg";
+  const iconClassName =
+    size === "lg"
+      ? "h-16 w-16 overflow-visible drop-shadow-[0_12px_18px_rgb(0_167_165/0.22)]"
+      : size === "sm"
+        ? "h-11 w-11 overflow-visible drop-shadow-[0_10px_14px_rgb(0_167_165/0.18)]"
+        : "h-8 w-8 overflow-visible drop-shadow-[0_8px_12px_rgb(0_167_165/0.16)]";
 
   return (
     <div className="flex items-center justify-center gap-3">
       <svg
         aria-hidden="true"
         viewBox="184 180 656 658"
-        className={
-          isLarge
-            ? "h-16 w-16 overflow-visible drop-shadow-[0_12px_18px_rgb(0_167_165/0.22)]"
-            : "h-11 w-11 overflow-visible drop-shadow-[0_10px_14px_rgb(0_167_165/0.18)]"
-        }
+        className={iconClassName}
       >
         <path
           d="M332 664C320 724 292 804 284 838C345 798 424 748 480 706C426 706 372 690 332 664Z"
@@ -46,15 +49,17 @@ export function VocaliLogo({ size = "lg" }: VocaliLogoProps) {
           </linearGradient>
         </defs>
       </svg>
-      <span
-        className={
-          isLarge
-            ? "text-5xl font-black tracking-[-0.03em] text-vocali-teal-deep"
-            : "text-3xl font-black tracking-[-0.03em] text-vocali-teal-deep"
-        }
-      >
-        Vocali
-      </span>
+      {variant === "full" ? (
+        <span
+          className={
+            isLarge
+              ? "text-5xl font-black tracking-[-0.03em] text-vocali-teal-deep"
+              : "text-3xl font-black tracking-[-0.03em] text-vocali-teal-deep"
+          }
+        >
+          Vocali
+        </span>
+      ) : null}
     </div>
   );
 }

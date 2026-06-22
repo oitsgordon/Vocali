@@ -1095,7 +1095,7 @@ function PracticeHeader({
           <ArrowLeft className="h-5 w-5" strokeWidth={3} />
         </Link>
       )}
-      <VocaliLogo size="sm" />
+      <VocaliLogo size="xs" variant="mark" />
       <div className="h-11 w-11" />
     </header>
   );
@@ -1112,7 +1112,7 @@ function LeaveAttemptDialog({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-vocali-teal-deep/36 px-4 pb-5 pt-8 backdrop-blur-[2px]"
+      className="vocali-safe-dialog fixed inset-0 z-50 flex items-end justify-center bg-vocali-teal-deep/36 px-4 pb-5 pt-8 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="leave-attempt-title"
@@ -1648,7 +1648,7 @@ function SpeakingView({
       className={
         isRecordingPhase || isStoppedPhase
           ? "vocali-session-timed"
-          : "flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]"
+          : "vocali-safe-top vocali-safe-top-tight vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]"
       }
     >
       <PracticeHeader
@@ -1872,7 +1872,7 @@ function TranscribingView({
   isBackDisabled?: boolean;
 }) {
   return (
-    <section className="flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]">
+    <section className="vocali-safe-top vocali-safe-top-tight vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]">
       <PracticeHeader
         backHref={backHref}
         backLabel={backLabel}
@@ -2007,7 +2007,7 @@ function FeedbackView({
   }
 
   return (
-    <section className="flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]">
+    <section className="vocali-safe-top vocali-safe-top-tight vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-6 sm:min-h-[860px]">
       <PracticeHeader backHref={backHref} backLabel={backLabel} />
 
       <div className="mt-8 rounded-[2rem] bg-white p-5 shadow-vocali-card">

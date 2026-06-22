@@ -59,9 +59,9 @@ export default function StreakCelebrationPage() {
   return (
     <ScreenFrame>
       <section className="vocali-streak-screen flex h-dvh min-h-dvh flex-col bg-vocali-teal-deep px-6 pb-4 pt-4 text-white sm:h-[860px] sm:min-h-[860px] sm:pb-6 sm:pt-6">
-        <header className="vocali-streak-header flex h-9 shrink-0 items-center justify-center overflow-visible">
-          <div className="scale-[0.72] opacity-88 [&_*]:text-white sm:scale-90">
-            <VocaliLogo size="sm" />
+        <header className="vocali-streak-header flex h-8 shrink-0 items-center justify-center overflow-visible">
+          <div className="opacity-90">
+            <VocaliLogo size="xs" variant="mark" />
           </div>
         </header>
 
