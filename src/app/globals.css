@@ -10,10 +10,6 @@
   --vocali-card: #ffffff;
   --vocali-muted: #64748b;
   --vocali-border: #bfedea;
-  --vocali-safe-area-top: env(safe-area-inset-top, 0px);
-  --vocali-safe-area-right: env(safe-area-inset-right, 0px);
-  --vocali-safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --vocali-safe-area-left: env(safe-area-inset-left, 0px);
 }
 
 @theme inline {
@@ -43,22 +39,6 @@ a,
   -webkit-touch-callout: none;
 }
 
-.vocali-screen-frame {
-  box-sizing: border-box;
-  padding-top: var(--vocali-safe-area-top);
-  padding-right: var(--vocali-safe-area-right);
-  padding-bottom: var(--vocali-safe-area-bottom);
-  padding-left: var(--vocali-safe-area-left);
-}
-
-.vocali-nav-content {
-  padding-bottom: calc(4rem + var(--vocali-safe-area-bottom));
-}
-
-.vocali-bottom-nav {
-  padding-bottom: calc(1rem + var(--vocali-safe-area-bottom));
-}
-
 @property --timer-progress {
   syntax: "<percentage>";
   inherits: false;
@@ -74,25 +54,12 @@ a,
 }
 
 .vocali-session-timed {
-  --vocali-session-padding-top: clamp(0.65rem, 2dvh, 1.25rem);
-  --vocali-session-padding-right: 1.25rem;
-  --vocali-session-padding-bottom: clamp(0.7rem, 2dvh, 1.35rem);
-  --vocali-session-padding-left: 1.25rem;
-  box-sizing: border-box;
   min-height: 100dvh;
   height: 100dvh;
-  margin-top: calc(0px - var(--vocali-safe-area-top));
-  margin-bottom: calc(0px - var(--vocali-safe-area-bottom));
   display: flex;
   flex-direction: column;
-  padding: calc(
-      var(--vocali-session-padding-top) + var(--vocali-safe-area-top)
-    )
-    calc(var(--vocali-session-padding-right) + var(--vocali-safe-area-right))
-    calc(
-      var(--vocali-session-padding-bottom) + var(--vocali-safe-area-bottom)
-    )
-    calc(var(--vocali-session-padding-left) + var(--vocali-safe-area-left));
+  padding: clamp(0.65rem, 2dvh, 1.25rem) 1.25rem
+    clamp(0.7rem, 2dvh, 1.35rem);
 }
 
 .vocali-session-prompt-card {
@@ -229,85 +196,17 @@ a,
   line-height: 1.06;
 }
 
-.vocali-dialog-overlay {
-  padding-top: calc(2rem + var(--vocali-safe-area-top));
-  padding-right: calc(1rem + var(--vocali-safe-area-right));
-  padding-bottom: calc(1.25rem + var(--vocali-safe-area-bottom));
-  padding-left: calc(1rem + var(--vocali-safe-area-left));
-}
-
-.vocali-streak-loading-screen,
-.vocali-streak-screen {
-  box-sizing: border-box;
-  margin-top: calc(0px - var(--vocali-safe-area-top));
-  margin-bottom: calc(0px - var(--vocali-safe-area-bottom));
-  min-height: 100dvh;
-  height: 100dvh;
-}
-
-.vocali-streak-loading-screen {
-  padding-top: calc(1.5rem + var(--vocali-safe-area-top));
-  padding-right: calc(1.5rem + var(--vocali-safe-area-right));
-  padding-bottom: calc(1.5rem + var(--vocali-safe-area-bottom));
-  padding-left: calc(1.5rem + var(--vocali-safe-area-left));
-}
-
-.vocali-streak-screen {
-  --vocali-streak-padding-top: 1rem;
-  --vocali-streak-padding-right: 1.5rem;
-  --vocali-streak-padding-bottom: 1rem;
-  --vocali-streak-padding-left: 1.5rem;
-  padding: calc(var(--vocali-streak-padding-top) + var(--vocali-safe-area-top))
-    calc(var(--vocali-streak-padding-right) + var(--vocali-safe-area-right))
-    calc(
-      var(--vocali-streak-padding-bottom) + var(--vocali-safe-area-bottom)
-    )
-    calc(var(--vocali-streak-padding-left) + var(--vocali-safe-area-left));
-}
-
 @media (min-width: 640px) {
-  .vocali-screen-frame {
-    padding: 0;
-  }
-
-  .vocali-nav-content {
-    padding-bottom: 4rem;
-  }
-
-  .vocali-bottom-nav {
-    padding-bottom: 0.75rem;
-  }
-
   .vocali-session-timed {
     min-height: 860px;
     height: 860px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding: clamp(0.65rem, 2dvh, 1.25rem) 1.25rem
-      clamp(0.7rem, 2dvh, 1.35rem);
-  }
-
-  .vocali-streak-loading-screen,
-  .vocali-streak-screen {
-    min-height: 860px;
-    height: 860px;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-
-  .vocali-streak-loading-screen {
-    padding: 1.5rem;
-  }
-
-  .vocali-streak-screen {
-    padding: 1.5rem;
   }
 }
 
 @media (max-height: 740px) {
   .vocali-session-timed {
-    --vocali-session-padding-top: 0.65rem;
-    --vocali-session-padding-bottom: 0.65rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
   }
 
   .vocali-session-prompt-title {
@@ -338,10 +237,7 @@ a,
 
 @media (max-height: 680px) {
   .vocali-session-timed {
-    --vocali-session-padding-top: 0.5rem;
-    --vocali-session-padding-right: 1rem;
-    --vocali-session-padding-bottom: 0.55rem;
-    --vocali-session-padding-left: 1rem;
+    padding: 0.5rem 1rem 0.55rem;
   }
 
   .vocali-session-eyebrow,
@@ -455,10 +351,7 @@ a,
 
 @media (max-height: 620px) {
   .vocali-session-timed {
-    --vocali-session-padding-top: 0.4rem;
-    --vocali-session-padding-right: 0.9rem;
-    --vocali-session-padding-bottom: 0.45rem;
-    --vocali-session-padding-left: 0.9rem;
+    padding: 0.4rem 0.9rem 0.45rem;
   }
 
   .vocali-session-prompt-card {
@@ -512,10 +405,7 @@ a,
 
 @media (max-height: 700px) {
   .vocali-streak-screen {
-    --vocali-streak-padding-top: 0.7rem;
-    --vocali-streak-padding-right: 1.25rem;
-    --vocali-streak-padding-bottom: 0.8rem;
-    --vocali-streak-padding-left: 1.25rem;
+    padding: 0.7rem 1.25rem 0.8rem;
   }
 
   .vocali-streak-header {
@@ -604,8 +494,8 @@ a,
 
 @media (max-height: 620px) {
   .vocali-streak-screen {
-    --vocali-streak-padding-top: 0.55rem;
-    --vocali-streak-padding-bottom: 0.6rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.6rem;
   }
 
   .vocali-streak-header {

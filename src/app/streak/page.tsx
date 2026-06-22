@@ -47,7 +47,7 @@ export default function StreakCelebrationPage() {
   if (status !== "ready") {
     return (
       <ScreenFrame>
-        <section className="vocali-streak-loading-screen flex min-h-dvh items-center justify-center bg-vocali-teal-deep px-6 text-center text-white sm:min-h-[860px]">
+        <section className="flex min-h-dvh items-center justify-center bg-vocali-teal-deep px-6 text-center text-white sm:min-h-[860px]">
           <p className="text-sm font-black uppercase tracking-[0.16em] text-[#8be4dd]">
             Loading streak
           </p>

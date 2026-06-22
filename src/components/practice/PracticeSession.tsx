@@ -1112,7 +1112,7 @@ function LeaveAttemptDialog({
 }) {
   return (
     <div
-      className="vocali-dialog-overlay fixed inset-0 z-50 flex items-end justify-center bg-vocali-teal-deep/36 px-4 pb-5 pt-8 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-vocali-teal-deep/36 px-4 pb-5 pt-8 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="leave-attempt-title"
