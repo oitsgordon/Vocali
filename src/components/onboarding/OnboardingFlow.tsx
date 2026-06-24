@@ -92,7 +92,11 @@ export function OnboardingFlow() {
   }
 
   return (
-    <section className="vocali-safe-top vocali-safe-top-loose vocali-safe-bottom flex min-h-dvh flex-col px-7 pb-7 pt-10 sm:min-h-[860px] sm:pt-12">
+    <section
+      className={`vocali-safe-top vocali-safe-top-loose vocali-safe-bottom flex min-h-dvh flex-col px-7 pb-7 pt-10 sm:min-h-[860px] sm:pt-12 ${
+        step === 0 ? "vocali-onboarding-welcome-screen" : ""
+      }`}
+    >
       <div className="flex items-center justify-between">
         <VocaliLogo size="sm" />
         <StepDots activeStep={step} />
@@ -135,32 +139,32 @@ export function OnboardingFlow() {
 
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
-    <div className="flex flex-1 flex-col justify-between pt-8 text-center">
+    <div className="vocali-onboarding-welcome flex flex-1 flex-col justify-between text-center">
       <div>
-        <h1 className="text-[2.65rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
+        <h1 className="vocali-onboarding-welcome-heading text-[2.65rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
           Build speaking confidence, one short prompt at a time.
         </h1>
-        <p className="mx-auto mt-5 max-w-xs text-lg font-bold leading-7 text-vocali-muted">
+        <p className="vocali-onboarding-welcome-copy mx-auto mt-5 max-w-xs text-lg font-bold leading-7 text-vocali-muted">
           Practise thinking out loud, explaining ideas, and speaking more
           naturally.
         </p>
       </div>
 
-      <div className="my-4">
+      <div className="vocali-onboarding-mascot my-4">
         <MascotPlaceholder />
       </div>
 
-      <div className="space-y-4">
+      <div className="vocali-onboarding-actions space-y-4">
         <button
           type="button"
           onClick={onNext}
-          className="flex h-16 w-full items-center justify-center rounded-[1.15rem] bg-vocali-orange px-6 text-xl font-black text-white shadow-[0_14px_24px_rgb(255_122_26/0.26)] transition hover:-translate-y-0.5"
+          className="vocali-onboarding-action flex h-16 w-full items-center justify-center rounded-[1.15rem] bg-vocali-orange px-6 text-xl font-black text-white shadow-[0_14px_24px_rgb(255_122_26/0.26)] transition hover:-translate-y-0.5"
         >
           Get started
         </button>
         <Link
           href="/login"
-          className="flex h-16 w-full items-center justify-center rounded-[1.15rem] border-2 border-vocali-teal bg-white/55 px-6 text-lg font-black text-vocali-teal transition hover:bg-white"
+          className="vocali-onboarding-action flex h-16 w-full items-center justify-center rounded-[1.15rem] border-2 border-vocali-teal bg-white/55 px-6 text-lg font-black text-vocali-teal transition hover:bg-white"
         >
           I already have an account
         </Link>

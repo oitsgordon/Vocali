@@ -67,11 +67,11 @@ a,
 }
 
 .vocali-bottom-nav {
-  padding-bottom: calc(1rem + var(--vocali-safe-area-bottom));
+  padding-bottom: calc(0.6rem + var(--vocali-safe-area-bottom));
 }
 
 .vocali-nav-content {
-  padding-bottom: calc(4rem + var(--vocali-safe-area-bottom));
+  padding-bottom: calc(3.75rem + var(--vocali-safe-area-bottom));
 }
 
 .vocali-safe-dialog {
@@ -243,6 +243,10 @@ a,
   padding-bottom: max(1rem, var(--vocali-safe-area-bottom));
 }
 
+.vocali-onboarding-welcome {
+  padding-top: 2rem;
+}
+
 @media (min-width: 640px) {
   .vocali-safe-top {
     padding-top: var(
@@ -280,6 +284,137 @@ a,
   .vocali-streak-screen {
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
+  }
+
+  .vocali-onboarding-welcome {
+    padding-top: 2rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .vocali-onboarding-welcome-screen {
+    padding-top: max(1.55rem, calc(var(--vocali-safe-area-top) + 0.35rem));
+    padding-bottom: max(1.1rem, calc(var(--vocali-safe-area-bottom) + 0.35rem));
+  }
+
+  .vocali-onboarding-welcome {
+    padding-top: 1.35rem;
+  }
+
+  .vocali-onboarding-welcome-heading {
+    font-size: 2.25rem;
+    line-height: 1.03;
+  }
+
+  .vocali-onboarding-welcome-copy {
+    margin-top: 0.85rem;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .vocali-onboarding-mascot {
+    margin-top: 0.65rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .vocali-onboarding-mascot > div {
+    height: 12.5rem;
+    transform: scale(0.86);
+    transform-origin: center;
+  }
+
+  .vocali-onboarding-actions {
+    gap: 0.75rem;
+  }
+
+  .vocali-onboarding-actions > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.75rem;
+  }
+
+  .vocali-onboarding-action {
+    height: 3.45rem;
+    border-radius: 1rem;
+  }
+}
+
+@media (max-height: 640px) {
+  .vocali-onboarding-welcome-screen {
+    padding-top: max(1.2rem, calc(var(--vocali-safe-area-top) + 0.25rem));
+    padding-bottom: max(0.9rem, calc(var(--vocali-safe-area-bottom) + 0.25rem));
+  }
+
+  .vocali-onboarding-welcome {
+    padding-top: 1rem;
+  }
+
+  .vocali-onboarding-welcome-heading {
+    font-size: 2rem;
+  }
+
+  .vocali-onboarding-welcome-copy {
+    margin-top: 0.65rem;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .vocali-onboarding-mascot {
+    margin-top: 0.45rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .vocali-onboarding-mascot > div {
+    height: 10.6rem;
+    transform: scale(0.76);
+  }
+
+  .vocali-onboarding-action {
+    height: 3.2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .vocali-onboarding-welcome-screen {
+    padding-top: max(0.9rem, calc(var(--vocali-safe-area-top) + 0.2rem));
+    padding-bottom: max(0.7rem, calc(var(--vocali-safe-area-bottom) + 0.2rem));
+  }
+
+  .vocali-onboarding-welcome {
+    padding-top: 0.75rem;
+  }
+
+  .vocali-onboarding-welcome-heading {
+    font-size: 1.82rem;
+    line-height: 1.02;
+  }
+
+  .vocali-onboarding-welcome-copy {
+    margin-top: 0.45rem;
+    font-size: 0.9rem;
+    line-height: 1.28;
+  }
+
+  .vocali-onboarding-mascot {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .vocali-onboarding-mascot > div {
+    height: 8.6rem;
+    transform: scale(0.64);
+  }
+
+  .vocali-onboarding-actions {
+    gap: 0.55rem;
+  }
+
+  .vocali-onboarding-actions > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.55rem;
+  }
+
+  .vocali-onboarding-action {
+    height: 3rem;
+    min-height: 3rem;
   }
 }
 
