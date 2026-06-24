@@ -25,7 +25,6 @@ workflows:
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.vocali.app"
         CAPACITOR_SERVER_URL: "https://vocali-zeta.vercel.app/"
-        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id 6780807774"
     scripts:
       - name: Show build configuration
         script: |
