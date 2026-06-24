@@ -8,7 +8,6 @@ import {
   Target,
 } from "lucide-react";
 import Link from "next/link";
-import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { useUserPreferences } from "@/lib/useUserPreferences";
@@ -22,12 +21,7 @@ export default function ProfilePage() {
   return (
     <ScreenFrame withNavPadding>
       <section className="vocali-safe-top px-5 pb-8 pt-7">
-        <header className="flex items-center gap-2.5">
-          <VocaliLogo size="xs" variant="mark" />
-          <p className="text-base font-black text-vocali-teal-deep">Profile</p>
-        </header>
-
-        <div className="mt-5 rounded-[2rem] bg-white p-5 text-center shadow-vocali-card">
+        <div className="rounded-[2rem] bg-white p-5 text-center shadow-vocali-card">
           <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-br from-[#5adfd4] to-vocali-teal text-white shadow-[0_18px_35px_rgb(0_167_165/0.22)]">
             <Mic className="h-14 w-14" strokeWidth={3} />
           </div>
