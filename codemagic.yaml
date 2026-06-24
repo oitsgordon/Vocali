@@ -24,14 +24,42 @@ workflows:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.vocali.app"
+        APP_APPLE_ID: "6780807774"
         CAPACITOR_SERVER_URL: "https://vocali-zeta.vercel.app/"
     scripts:
       - name: Show build configuration
         script: |
           echo "Bundle ID: $BUNDLE_ID"
+          echo "App Store Connect Apple ID: $APP_APPLE_ID"
           echo "Xcode project: $XCODE_PROJECT"
           echo "Xcode scheme: $XCODE_SCHEME"
           echo "Capacitor server URL: $CAPACITOR_SERVER_URL"
+      - name: Verify App Store Connect app access
+        script: |
+          set -e
+
+          echo "Checking direct App Store Connect access to app $APP_APPLE_ID..."
+          app-store-connect apps get "$APP_APPLE_ID" --json
+
+          echo "Checking App Store Connect bundle ID lookup for $BUNDLE_ID..."
+          APP_LOOKUP_JSON="$(app-store-connect apps list \
+            --bundle-id-identifier "$BUNDLE_ID" \
+            --strict-match-identifier \
+            --platform IOS \
+            --json)"
+          echo "$APP_LOOKUP_JSON"
+
+          if ! printf '%s' "$APP_LOOKUP_JSON" | grep -q "$APP_APPLE_ID"; then
+            echo "The selected App Store Connect integration cannot map $BUNDLE_ID to app $APP_APPLE_ID."
+            echo "Check that the API key belongs to the same App Store Connect provider/team and has access to Vocali."
+            exit 1
+          fi
+
+          echo "Latest uploaded build for version 1.0, if any:"
+          app-store-connect get-latest-build-number "$APP_APPLE_ID" \
+            --platform IOS \
+            --version-string 1.0 \
+            --include-version || true
       - name: Install npm dependencies
         script: |
           npm ci
