@@ -126,6 +126,8 @@ export function LoginForm({
     }
   }
 
+  const activeOAuthProvider = auth.errorMessage ? null : oauthProvider;
+
   return (
     <ScreenFrame>
       <section className="vocali-safe-top vocali-safe-top-tight vocali-safe-bottom mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-5 pt-8 sm:min-h-[760px]">
@@ -177,9 +179,9 @@ export function LoginForm({
               <div className="space-y-2.5">
                 <OAuthButton
                   disabled={
-                    isSubmitting || Boolean(oauthProvider) || !auth.isReady
+                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
                   }
-                  isLoading={oauthProvider === "apple"}
+                  isLoading={activeOAuthProvider === "apple"}
                   onClick={() => void handleOAuthSignIn("apple")}
                   variant="apple"
                 >
@@ -187,9 +189,9 @@ export function LoginForm({
                 </OAuthButton>
                 <OAuthButton
                   disabled={
-                    isSubmitting || Boolean(oauthProvider) || !auth.isReady
+                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
                   }
-                  isLoading={oauthProvider === "google"}
+                  isLoading={activeOAuthProvider === "google"}
                   onClick={() => void handleOAuthSignIn("google")}
                   variant="google"
                 >
@@ -270,7 +272,7 @@ export function LoginForm({
                 <button
                   type="submit"
                   disabled={
-                    isSubmitting || Boolean(oauthProvider) || !auth.isReady
+                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
                   }
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-[1rem] bg-vocali-orange px-5 text-base font-extrabold text-white shadow-[0_14px_24px_rgb(255_122_26/0.22)] disabled:opacity-70"
                 >

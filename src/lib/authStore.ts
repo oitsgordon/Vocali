@@ -1,6 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import type { Provider, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
@@ -23,9 +26,14 @@ type AuthResult = {
   ok: boolean;
 };
 
+const NATIVE_OAUTH_REDIRECT_URL = "com.vocali.app://auth/callback";
 const OAUTH_REDIRECT_STORAGE_KEY = "vocali:oauth-redirect";
 const listeners = new Set<() => void>();
 let hasInitialized = false;
+let hasRegisteredNativeOAuthCallbacks = false;
+let isHandlingNativeOAuthCallback = false;
+let isNativeOAuthFlowActive = false;
+let lastHandledNativeOAuthUrl: string | null = null;
 let syncUserId: string | null = null;
 let snapshot: AuthSnapshot = {
   errorMessage: null,
@@ -52,6 +60,8 @@ export function initializeAuthStore() {
     });
     return;
   }
+
+  registerNativeOAuthCallbacks();
 
   void supabase.auth.getSession().then(({ data, error }) => {
     if (error) {
@@ -172,7 +182,7 @@ export async function signInWithApple(redirectPath = "/home") {
   return signInWithOAuthProvider("apple", redirectPath);
 }
 
-export async function completeOAuthSignIn(): Promise<AuthResult> {
+export async function completeOAuthSignIn(codeOverride?: string): Promise<AuthResult> {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
@@ -182,18 +192,20 @@ export async function completeOAuthSignIn(): Promise<AuthResult> {
     };
   }
 
-  if (typeof window !== "undefined") {
-    const code = new URL(window.location.href).searchParams.get("code");
+  const code =
+    codeOverride ??
+    (typeof window !== "undefined"
+      ? new URL(window.location.href).searchParams.get("code")
+      : null);
 
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-      if (error) {
-        const { data } = await supabase.auth.getSession();
+    if (error) {
+      const { data } = await supabase.auth.getSession();
 
-        if (!data.session?.user) {
-          return { ok: false, error: error.message };
-        }
+      if (!data.session?.user) {
+        return { ok: false, error: error.message };
       }
     }
   }
@@ -307,6 +319,41 @@ async function signInWithOAuthProvider(
 
   const safeRedirectPath = sanitizeLocalRedirectPath(redirectPath);
   window.sessionStorage.setItem(OAUTH_REDIRECT_STORAGE_KEY, safeRedirectPath);
+  updateSnapshot({ errorMessage: null });
+
+  if (isNativeIosApp()) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: NATIVE_OAUTH_REDIRECT_URL,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    if (!data.url) {
+      return {
+        ok: false,
+        error: "Could not open sign-in. Please try again.",
+      };
+    }
+
+    try {
+      isNativeOAuthFlowActive = true;
+      await Browser.open({ url: data.url });
+    } catch {
+      isNativeOAuthFlowActive = false;
+      return {
+        ok: false,
+        error: "Could not open sign-in. Please try again.",
+      };
+    }
+
+    return { ok: true, error: null };
+  }
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
@@ -316,6 +363,117 @@ async function signInWithOAuthProvider(
   });
 
   return error ? { ok: false, error: error.message } : { ok: true, error: null };
+}
+
+function registerNativeOAuthCallbacks() {
+  if (!isNativeIosApp() || hasRegisteredNativeOAuthCallbacks) {
+    return;
+  }
+
+  hasRegisteredNativeOAuthCallbacks = true;
+
+  void App.addListener("appUrlOpen", (event) => {
+    void handleNativeOAuthCallback(event.url);
+  });
+
+  void Browser.addListener("browserFinished", () => {
+    if (!isNativeOAuthFlowActive || isHandlingNativeOAuthCallback) {
+      return;
+    }
+
+    isNativeOAuthFlowActive = false;
+    updateSnapshot({
+      errorMessage: "Sign-in was cancelled or could not finish.",
+      isReady: true,
+    });
+  });
+
+  void App.getLaunchUrl().then((launchUrl) => {
+    if (launchUrl?.url) {
+      void handleNativeOAuthCallback(launchUrl.url);
+    }
+  });
+}
+
+async function handleNativeOAuthCallback(url: string) {
+  if (
+    !url.startsWith(NATIVE_OAUTH_REDIRECT_URL) ||
+    url === lastHandledNativeOAuthUrl ||
+    isHandlingNativeOAuthCallback
+  ) {
+    return;
+  }
+
+  lastHandledNativeOAuthUrl = url;
+  isHandlingNativeOAuthCallback = true;
+  isNativeOAuthFlowActive = false;
+
+  try {
+    await Browser.close();
+  } catch {
+    // Browser may already be closed by the system.
+  }
+
+  const callbackParams = getNativeOAuthCallbackParams(url);
+  const oauthError =
+    callbackParams.get("error_description") ?? callbackParams.get("error");
+
+  if (oauthError) {
+    updateSnapshot({
+      errorMessage: "Sign-in was cancelled or could not finish.",
+      isReady: true,
+    });
+    isHandlingNativeOAuthCallback = false;
+    return;
+  }
+
+  const code = callbackParams.get("code");
+
+  if (!code) {
+    updateSnapshot({
+      errorMessage: "Sign-in was cancelled or could not finish.",
+      isReady: true,
+    });
+    isHandlingNativeOAuthCallback = false;
+    return;
+  }
+
+  const result = await completeOAuthSignIn(code);
+  isHandlingNativeOAuthCallback = false;
+
+  if (!result.ok) {
+    updateSnapshot({
+      errorMessage: "Sign-in was cancelled or could not finish.",
+      isReady: true,
+    });
+    return;
+  }
+
+  window.location.assign(consumeOAuthRedirectPath("/home"));
+}
+
+function getNativeOAuthCallbackParams(url: string) {
+  const callbackUrl = new URL(url);
+  const params = new URLSearchParams(callbackUrl.search);
+
+  if (callbackUrl.hash) {
+    const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+    hashParams.forEach((value, key) => {
+      if (!params.has(key)) {
+        params.set(key, value);
+      }
+    });
+  }
+
+  return params;
+}
+
+function isNativeIosApp() {
+  return (
+    typeof window !== "undefined" &&
+    Capacitor.isNativePlatform() &&
+    Capacitor.getPlatform() === "ios"
+  );
 }
 
 function updateSnapshot(nextSnapshot: Partial<AuthSnapshot>) {
