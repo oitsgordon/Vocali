@@ -331,24 +331,45 @@ async function signInWithOAuthProvider(
     });
 
     if (error) {
-      return { ok: false, error: error.message };
-    }
-
-    if (!data.url) {
+      console.error("[Vocali OAuth] Supabase OAuth error", error);
       return {
         ok: false,
         error: "Could not open sign-in. Please try again.",
       };
     }
 
+    if (!data.url) {
+      return {
+        ok: false,
+        error: "Sign-in URL was not created.",
+      };
+    }
+
+    console.info("[Vocali OAuth] Native OAuth start", {
+      provider,
+      platform: Capacitor.getPlatform(),
+      isNative: Capacitor.isNativePlatform(),
+      hasUrl: Boolean(data.url),
+      urlStart: data.url?.slice(0, 80),
+    });
+
+    if (!Capacitor.isPluginAvailable("Browser")) {
+      console.error("[Vocali OAuth] Browser plugin unavailable");
+      return {
+        ok: false,
+        error: "Sign-in is not available in this build.",
+      };
+    }
+
     try {
       isNativeOAuthFlowActive = true;
       await Browser.open({ url: data.url });
-    } catch {
+    } catch (error) {
+      console.error("[Vocali OAuth] Browser.open failed", error);
       isNativeOAuthFlowActive = false;
       return {
         ok: false,
-        error: "Could not open sign-in. Please try again.",
+        error: "Could not open the sign-in window.",
       };
     }
 
