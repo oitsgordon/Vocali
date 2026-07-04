@@ -13,6 +13,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useState } from "react";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { clearAttempts } from "@/lib/attemptStorage";
 import { clearStoredDailyChallenge } from "@/lib/dailyChallenge";
@@ -227,8 +228,9 @@ function SettingsContent({
   }
 
   return (
-    <ScreenFrame>
-      <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+    <AuthGate>
+      <ScreenFrame>
+        <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
         <header className="flex items-center justify-between">
           <Link
             href="/profile"
@@ -246,10 +248,6 @@ function SettingsContent({
           <h1 className="mt-2 text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
             Personalise Vocali.
           </h1>
-          <p className="mt-4 text-base font-bold leading-6 text-vocali-muted">
-            Your profile preferences, practice history, and saved replays stay
-            in this browser for the MVP.
-          </p>
         </div>
 
         {message ? (
@@ -273,9 +271,6 @@ function SettingsContent({
               <h2 className="text-xl font-black text-vocali-teal-deep">
                 Personalisation
               </h2>
-              <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
-                Keep it simple. These choices stay in this browser.
-              </p>
             </div>
           </div>
 
@@ -352,29 +347,22 @@ function SettingsContent({
               <h2 className="text-xl font-black text-vocali-teal-deep">
                 Local data
               </h2>
-              <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
-                These actions only clear browser-local tester data. They do not
-                delete Vocali&apos;s built-in mock prompts.
-              </p>
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
             <SettingsAction
-              copy="Remove completed attempts, transcripts, and progress totals."
               icon={History}
               label="Clear practice history"
               onClick={handleClearAttempts}
             />
             <SettingsAction
-              copy="Remove saved audio replays kept in this browser."
               disabled={isClearing}
               icon={Volume2}
               label="Clear saved recordings"
               onClick={handleClearRecordings}
             />
             <SettingsAction
-              copy="Remove your local focus and daily habit choices."
               icon={RotateCcw}
               label="Reset onboarding"
               onClick={handleResetOnboarding}
@@ -389,11 +377,11 @@ function SettingsContent({
             </div>
             <div>
               <h2 className="text-xl font-black text-vocali-teal-deep">
-                Reset demo
+                Reset device data
               </h2>
               <p className="mt-2 text-sm font-bold leading-5 text-vocali-muted">
-                Use this if you want Vocali to feel fresh for another test run
-                on this device, including practice preferences.
+                Use this if you want Vocali to feel fresh on this device,
+                including practice preferences.
               </p>
             </div>
           </div>
@@ -414,13 +402,13 @@ function SettingsContent({
         >
           Back to profile
         </Link>
-      </section>
-    </ScreenFrame>
+        </section>
+      </ScreenFrame>
+    </AuthGate>
   );
 }
 
 type SettingsActionProps = {
-  copy: string;
   disabled?: boolean;
   icon: typeof History;
   label: string;
@@ -470,7 +458,6 @@ function PreferenceChoices<T extends FocusArea | DailyGoal>({
 }
 
 function SettingsAction({
-  copy,
   disabled = false,
   icon: Icon,
   label,
@@ -490,9 +477,6 @@ function SettingsAction({
         />
         <div>
           <p className="text-sm font-black text-vocali-teal-deep">{label}</p>
-          <p className="mt-0.5 text-xs font-bold leading-4 text-vocali-muted">
-            {copy}
-          </p>
         </div>
       </div>
       <ChevronRightIcon />

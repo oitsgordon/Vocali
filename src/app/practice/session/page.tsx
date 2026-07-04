@@ -1,3 +1,4 @@
+import { AuthGate } from "@/components/auth/AuthGate";
 import { PracticeSession } from "@/components/practice/PracticeSession";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 
@@ -58,15 +59,17 @@ export default async function PracticeSessionPage({
   const source = getSessionSource(params.source);
 
   return (
-    <ScreenFrame>
-      <PracticeSession
-        categorySlug={categorySlug}
-        challengeId={challengeId}
-        isDailyChallenge={source === "home" || source === "onboarding"}
-        planningSeconds={planningSeconds}
-        source={source}
-        speakingSeconds={speakingSeconds}
-      />
-    </ScreenFrame>
+    <AuthGate>
+      <ScreenFrame>
+        <PracticeSession
+          categorySlug={categorySlug}
+          challengeId={challengeId}
+          isDailyChallenge={source === "home" || source === "onboarding"}
+          planningSeconds={planningSeconds}
+          source={source}
+          speakingSeconds={speakingSeconds}
+        />
+      </ScreenFrame>
+    </AuthGate>
   );
 }

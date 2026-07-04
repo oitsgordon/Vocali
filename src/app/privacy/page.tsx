@@ -8,13 +8,13 @@ const privacySections = [
     title: "Your recordings",
     icon: Mic,
     copy:
-      "Vocali keeps saved replay references in this browser on your device. When you submit a recording, the audio is sent securely to Vocali's transcription endpoint so it can prepare a transcript.",
+      "Saved audio replays stay on this device. When you submit a recording, the audio is sent securely to Vocali's transcription endpoint so it can prepare a transcript.",
   },
   {
     title: "Your practice history",
     icon: Database,
     copy:
-      "Saved practice history, transcripts, progress, and replay references are stored locally in this browser for the MVP. You can clear practice history and saved recordings from Settings.",
+      "Signed-in accounts store progress, transcripts, speaking metrics, and feedback in Supabase so history can sync across devices. Audio replay files are not synced to the cloud.",
   },
   {
     title: "Speaking metrics",
@@ -23,10 +23,10 @@ const privacySections = [
       "When a transcript is available, Vocali uses it to calculate simple signals like word count, pace, filler words, repetition, and time used.",
   },
   {
-    title: "What is not built yet",
+    title: "Payments and coaching",
     icon: Sparkles,
     copy:
-      "Vocali does not yet provide full AI coaching or semantic judgement of answer quality. It also does not have accounts, cloud sync, Supabase storage, payments, or subscriptions yet.",
+      "Vocali does not use payments or subscriptions. Feedback is based on transcript-derived signals, not semantic judgement of answer quality.",
   },
 ];
 
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             </p>
           </div>
           <span className="rounded-full bg-vocali-teal/12 px-4 py-2 text-sm font-black text-vocali-teal">
-            Local-first MVP
+            Audio stays local
           </span>
         </header>
 
@@ -52,9 +52,9 @@ export default function PrivacyPage() {
             Your practice stays close to you.
           </h1>
           <p className="mt-4 text-base font-bold leading-6 text-vocali-muted">
-            Vocali is still a local-first MVP. Your progress stays in this
-            browser, with audio sent for transcription only when you submit an
-            attempt.
+            Your account can sync progress, transcripts, and metrics. Audio
+            replays stay on this device, and submitted audio is sent only when
+            you ask Vocali to transcribe an attempt.
           </p>
         </div>
 

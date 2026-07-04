@@ -8,6 +8,7 @@ import {
   Flame,
   MessageCircle,
 } from "lucide-react";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { StreakCard } from "@/components/dashboard/DashboardCards";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
@@ -27,33 +28,35 @@ export default function ProgressPage() {
   const patternInsights = getSpeakingPatternInsights(attempts);
 
   return (
-    <ScreenFrame withNavPadding>
-      <section className="vocali-safe-top px-5 pb-8 pt-7">
-        <div>
-          <p className="text-lg font-black text-vocali-teal">Keep going</p>
-          <h1 className="mt-2 text-[2.35rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
-            Your speaking habit is taking shape.
-          </h1>
-        </div>
+    <AuthGate>
+      <ScreenFrame withNavPadding>
+        <section className="vocali-safe-top px-5 pb-8 pt-7">
+          <div>
+            <p className="text-lg font-black text-vocali-teal">Keep going</p>
+            <h1 className="mt-2 text-[2.35rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
+              Your speaking habit is taking shape.
+            </h1>
+          </div>
 
-        <div className="mt-6 space-y-5">
-          <StreakCard />
-          <PracticeTotalsGrid totals={totals} />
-          {hasLoadedAttempts && !hasAttempts ? (
-            <FirstAttemptEmptyState />
-          ) : (
-            <>
-              <SpeakingPatternCards
-                insights={patternInsights.insights}
-                usableAttemptCount={patternInsights.usableAttemptCount}
-              />
-              <RecentAttemptsList attempts={hasLoadedAttempts ? attempts : []} />
-            </>
-          )}
-        </div>
-      </section>
-      <BottomNav />
-    </ScreenFrame>
+          <div className="mt-6 space-y-5">
+            <StreakCard />
+            <PracticeTotalsGrid totals={totals} />
+            {hasLoadedAttempts && !hasAttempts ? (
+              <FirstAttemptEmptyState />
+            ) : (
+              <>
+                <SpeakingPatternCards
+                  insights={patternInsights.insights}
+                  usableAttemptCount={patternInsights.usableAttemptCount}
+                />
+                <RecentAttemptsList attempts={hasLoadedAttempts ? attempts : []} />
+              </>
+            )}
+          </div>
+        </section>
+        <BottomNav />
+      </ScreenFrame>
+    </AuthGate>
   );
 }
 
@@ -117,8 +120,7 @@ function FirstAttemptEmptyState() {
           Record your first attempt
         </h2>
         <p className="mt-2 text-sm font-semibold leading-5 text-vocali-muted">
-          Complete one short speaking prompt and Vocali will start showing your
-          speaking patterns here.
+          Complete one prompt to see patterns.
         </p>
         <Link
           href="/practice"
@@ -138,8 +140,7 @@ function MoreAttemptsNeededState() {
         More attempts needed
       </p>
       <p className="mt-2 text-sm font-semibold leading-5 text-vocali-muted">
-        Vocali needs a transcript or saved speaking metrics before it can show
-        measured patterns. Complete one recorded attempt and submit it to start.
+        Complete one recorded attempt to see patterns.
       </p>
     </div>
   );
@@ -164,7 +165,7 @@ function SpeakingPatternCards({
             Speaking patterns
           </h2>
           <p className="mt-1 text-xs font-bold text-vocali-muted">
-            Based on local completed attempts
+            Based on completed attempts
           </p>
         </div>
         {usableAttemptCount > 0 ? (
@@ -275,10 +276,6 @@ function RecentAttemptsList({ attempts }: { attempts: LocalAttempt[] }) {
         <div className="rounded-[1.25rem] bg-vocali-cream p-4">
           <p className="text-base font-black text-vocali-teal-deep">
             No completed attempts yet
-          </p>
-          <p className="mt-2 text-sm font-semibold leading-5 text-vocali-muted">
-            Finish a short speaking prompt and your local practice history will
-            appear here.
           </p>
         </div>
       ) : (

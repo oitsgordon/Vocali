@@ -1,7 +1,7 @@
 import type { ProgressPreview, RecentFeedback, UserProfile } from "@/lib/types";
 
 export const mockUser: UserProfile = {
-  name: "Mia",
+  name: "there",
   streakDays: 7,
   weeklyGoal: 5,
   completedThisWeek: 4,

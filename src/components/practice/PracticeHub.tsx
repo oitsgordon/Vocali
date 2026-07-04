@@ -194,9 +194,6 @@ export function PracticeHub({
         <h1 className="mt-2 text-[2.45rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
           Choose your practice
         </h1>
-        <p className="mt-3 text-base font-bold leading-6 text-vocali-muted">
-          Pick a prompt style, then set your timing.
-        </p>
       </header>
 
       <div className="mt-6 space-y-3">
@@ -257,9 +254,6 @@ export function PracticeHub({
           onSelect={selectSpeakingTime}
           variant="orange"
         />
-        <p className="text-sm font-bold text-vocali-muted">
-          Pick a little thinking time, then speak your answer out loud.
-        </p>
       </section>
 
       <section className="mt-5 rounded-[2rem] bg-vocali-teal-deep p-5 text-white shadow-[0_20px_45px_rgb(7_50_71/0.16)]">
@@ -287,12 +281,6 @@ export function PracticeHub({
             {selectedSpeakingTime} sec speaking
           </span>
         </div>
-
-        <p className="mt-4 text-base font-bold leading-6 text-white/78">
-          {category
-            ? "Random prompt chosen when you start."
-            : "Pick a category to start a practice session."}
-        </p>
 
         <button
           className="mt-5 flex h-16 w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)] transition disabled:cursor-not-allowed disabled:opacity-55"

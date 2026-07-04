@@ -167,10 +167,6 @@ export function DailyChallengeHero() {
           </div>
         </div>
 
-        <p className="mt-4 max-w-[18rem] text-base font-bold leading-6 text-white/78">
-          Nice work. You got today&apos;s speaking rep done.
-        </p>
-
         <div className="mt-5 rounded-[1.4rem] bg-white p-4 text-vocali-teal-deep">
           <p className="text-sm font-black uppercase tracking-[0.12em] text-vocali-muted">
             Today&apos;s note
@@ -211,9 +207,6 @@ export function DailyChallengeHero() {
         <p className="text-xs font-black uppercase tracking-[0.12em] text-vocali-muted/85">
           Today&apos;s prompt
         </p>
-        <p className="mt-2 text-xl font-black leading-tight tracking-[-0.03em]">
-          Revealed when your planning timer starts.
-        </p>
         <p className="mt-2 text-xs font-black text-vocali-muted">
           30 sec plan &middot; 60 sec speak
         </p>
@@ -243,8 +236,7 @@ export function ProgressPreviewCard() {
           <BarChart3 className="h-6 w-6 text-vocali-teal" />
         </div>
         <p className="text-base font-bold leading-6 text-vocali-muted">
-          Complete your first prompt and Vocali will start tracking your local
-          practice habit here.
+          Complete your first prompt to start tracking progress.
         </p>
       </section>
     );

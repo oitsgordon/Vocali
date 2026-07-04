@@ -75,7 +75,7 @@ export function OnboardingFlow() {
 
   function finishOnboarding() {
     saveOnboardingChoices();
-    router.push("/home");
+    router.push("/login?mode=signup&redirect=/home");
   }
 
   function startQuickRep() {
@@ -88,7 +88,11 @@ export function OnboardingFlow() {
       source: "onboarding",
     });
 
-    router.push(`/practice/session?${params.toString()}`);
+    router.push(
+      `/login?mode=signup&redirect=${encodeURIComponent(
+        `/practice/session?${params.toString()}`,
+      )}`,
+    );
   }
 
   return (
@@ -118,7 +122,7 @@ export function OnboardingFlow() {
         <ChoiceStep
           eyebrow="Daily habit"
           question="What feels doable each day?"
-          supportText="Start small. Confidence comes from reps."
+          supportText="Start small. Keep showing up."
           options={habitOptions}
           selectedOption={selectedHabit}
           onSelect={setSelectedHabit}
@@ -145,8 +149,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           Build speaking confidence, one short prompt at a time.
         </h1>
         <p className="vocali-onboarding-welcome-copy mx-auto mt-5 max-w-xs text-lg font-bold leading-7 text-vocali-muted">
-          Practise thinking out loud, explaining ideas, and speaking more
-          naturally.
+          Practise thinking out loud and speaking naturally.
         </p>
       </div>
 
@@ -163,7 +166,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           Get started
         </button>
         <Link
-          href="/login"
+          href="/login?mode=login"
           className="vocali-onboarding-action flex h-16 w-full items-center justify-center rounded-[1.15rem] border-2 border-vocali-teal bg-white/55 px-6 text-lg font-black text-vocali-teal transition hover:bg-white"
         >
           I already have an account
@@ -278,7 +281,7 @@ function QuickRepStep({
           First rep
         </p>
         <h1 className="mx-auto mt-3 max-w-sm text-center text-[2.35rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
-          Try your first quick rep?
+          Try your first prompt?
         </h1>
         <p className="mx-auto mt-4 max-w-xs text-center text-lg font-bold leading-7 text-vocali-muted">
           We&apos;ll give you a short prompt based on your focus.

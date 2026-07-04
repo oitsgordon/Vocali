@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Flame } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { getCompletedWeekdays, getStreakStatus } from "@/lib/attemptStorage";
@@ -46,19 +47,22 @@ export default function StreakCelebrationPage() {
 
   if (status !== "ready") {
     return (
-      <ScreenFrame>
-        <section className="flex min-h-dvh items-center justify-center bg-vocali-teal-deep px-6 text-center text-white sm:min-h-[860px]">
-          <p className="text-sm font-black uppercase tracking-[0.16em] text-[#8be4dd]">
-            Loading streak
-          </p>
-        </section>
-      </ScreenFrame>
+      <AuthGate>
+        <ScreenFrame>
+          <section className="flex min-h-dvh items-center justify-center bg-vocali-teal-deep px-6 text-center text-white sm:min-h-[860px]">
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-[#8be4dd]">
+              Loading streak
+            </p>
+          </section>
+        </ScreenFrame>
+      </AuthGate>
     );
   }
 
   return (
-    <ScreenFrame>
-      <section className="vocali-streak-screen flex h-dvh min-h-dvh flex-col bg-vocali-teal-deep px-6 pb-4 pt-4 text-white sm:h-[860px] sm:min-h-[860px] sm:pb-6 sm:pt-6">
+    <AuthGate>
+      <ScreenFrame>
+        <section className="vocali-streak-screen flex h-dvh min-h-dvh flex-col bg-vocali-teal-deep px-6 pb-4 pt-4 text-white sm:h-[860px] sm:min-h-[860px] sm:pb-6 sm:pt-6">
         <header className="vocali-streak-header flex h-8 shrink-0 items-center justify-center overflow-visible">
           <div className="opacity-90">
             <VocaliLogo size="xs" variant="mark" />
@@ -135,7 +139,8 @@ export default function StreakCelebrationPage() {
             Practice more
           </Link>
         </div>
-      </section>
-    </ScreenFrame>
+        </section>
+      </ScreenFrame>
+    </AuthGate>
   );
 }

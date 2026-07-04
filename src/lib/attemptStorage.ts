@@ -1,4 +1,5 @@
 import type { LocalAttempt } from "@/lib/types";
+import { syncPracticeAttempt } from "@/lib/supabaseRemote";
 
 const attemptsStorageKey = "vocali:attempts:v1";
 const attemptsChangedEvent = "vocali:attempts-changed";
@@ -195,6 +196,49 @@ export function saveAttempt(attempt: LocalAttempt) {
         ? attempts.map((item) => (item.id === attempt.id ? attempt : item))
         : [attempt, ...attempts];
 
+    const rawAttempts = JSON.stringify(nextAttempts);
+    cachedRawAttempts = rawAttempts;
+    cachedAttempts = nextAttempts;
+    window.localStorage.setItem(attemptsStorageKey, rawAttempts);
+    dispatchAttemptsChanged();
+    void syncPracticeAttempt(attempt);
+  } catch {
+    cachedRawAttempts = null;
+    cachedAttempts = emptyAttempts;
+  }
+}
+
+export function cacheSyncedAttempts(syncedAttempts: LocalAttempt[]) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  try {
+    const localAttemptsById = new Map(
+      getAttempts().map((attempt) => [attempt.id, attempt]),
+    );
+    const mergedAttemptsById = new Map<string, LocalAttempt>();
+
+    for (const syncedAttempt of syncedAttempts) {
+      const localAttempt = localAttemptsById.get(syncedAttempt.id);
+
+      mergedAttemptsById.set(syncedAttempt.id, {
+        ...syncedAttempt,
+        hasLocalRecording: localAttempt?.hasLocalRecording,
+        recordingId: localAttempt?.recordingId,
+      });
+    }
+
+    for (const localAttempt of localAttemptsById.values()) {
+      if (!mergedAttemptsById.has(localAttempt.id)) {
+        mergedAttemptsById.set(localAttempt.id, localAttempt);
+      }
+    }
+
+    const nextAttempts = Array.from(mergedAttemptsById.values()).sort(
+      (a, b) =>
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
+    );
     const rawAttempts = JSON.stringify(nextAttempts);
     cachedRawAttempts = rawAttempts;
     cachedAttempts = nextAttempts;

@@ -1,3 +1,5 @@
+import { syncProfilePreferences } from "@/lib/supabaseRemote";
+
 const userPreferencesStorageKey = "vocali:user-preferences:v1";
 const userPreferencesChangedEvent = "vocali:user-preferences-changed";
 
@@ -26,7 +28,7 @@ export type UserPreferences = {
 
 export const defaultUserPreferences: UserPreferences = {
   dailyGoal: "1 short prompt",
-  displayName: "Mia",
+  displayName: "there",
   focusArea: "Speaking more naturally",
 };
 
@@ -122,6 +124,7 @@ export function saveUserPreferences(preferences: UserPreferences) {
       }),
     );
     dispatchUserPreferencesChanged();
+    void syncProfilePreferences(preferences);
     return true;
   } catch {
     return false;

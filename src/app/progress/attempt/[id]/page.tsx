@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CalendarDays, Clock3, Mic, Play } from "lucide-react";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { ExpandableTranscript } from "@/components/shared/ExpandableTranscript";
@@ -31,27 +32,34 @@ export default function AttemptDetailPage() {
   );
 
   if (hasLoadedAttempts && !attempt) {
-    return <MissingAttemptState />;
+    return (
+      <AuthGate>
+        <MissingAttemptState />
+      </AuthGate>
+    );
   }
 
   if (!attempt) {
     return (
-      <ScreenFrame>
-        <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
-          <AttemptHeader />
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-base font-black text-vocali-muted">
-              Loading attempt...
-            </p>
-          </div>
-        </section>
-      </ScreenFrame>
+      <AuthGate>
+        <ScreenFrame>
+          <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
+            <AttemptHeader />
+            <div className="flex flex-1 items-center justify-center">
+              <p className="text-base font-black text-vocali-muted">
+                Loading attempt...
+              </p>
+            </div>
+          </section>
+        </ScreenFrame>
+      </AuthGate>
     );
   }
 
   return (
-    <ScreenFrame>
-      <section className="vocali-safe-top vocali-safe-bottom min-h-dvh px-5 pb-7 pt-7 sm:min-h-[860px]">
+    <AuthGate>
+      <ScreenFrame>
+        <section className="vocali-safe-top vocali-safe-bottom min-h-dvh px-5 pb-7 pt-7 sm:min-h-[860px]">
         <AttemptHeader />
 
         <div className="mt-7 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">
@@ -88,8 +96,9 @@ export default function AttemptDetailPage() {
           <RecordingReplay attempt={attempt} />
           <FeedbackSection attempt={attempt} />
         </div>
-      </section>
-    </ScreenFrame>
+        </section>
+      </ScreenFrame>
+    </AuthGate>
   );
 }
 
