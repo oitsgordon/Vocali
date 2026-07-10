@@ -1,7 +1,11 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { SocialLogin, type AppleProviderResponse } from "@capgo/capacitor-social-login";
+import {
+  SocialLogin,
+  type AppleProviderResponse,
+  type SocialLoginError,
+} from "@capgo/capacitor-social-login";
 import { Capacitor } from "@capacitor/core";
 import type { Provider, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
@@ -185,7 +189,7 @@ export async function signInWithApple() {
   if (!isNativeAppleSignInAvailable()) {
     return {
       ok: false,
-      error: "Apple sign-in is available in the iPhone app.",
+      error: "Apple sign-in is not available in this build.",
     };
   }
 
@@ -200,7 +204,7 @@ export async function signInWithApple() {
         nonce,
       },
     });
-    const appleIdToken = appleLoginResult.result.idToken;
+    const appleIdToken = getAppleIdentityToken(appleLoginResult.result);
 
     if (!appleIdToken) {
       console.error(
@@ -237,6 +241,10 @@ export async function signInWithApple() {
 
     return { ok: true, error: null };
   } catch (error) {
+    if (isAppleSignInCancelled(error)) {
+      return { ok: false, error: "Apple sign-in was cancelled." };
+    }
+
     console.error("[Vocali Apple Sign-In] native failed", error);
     return { ok: false, error: "Apple sign-in could not finish." };
   }
@@ -473,8 +481,32 @@ function getAppleDisplayName(profile: AppleProviderResponse["profile"]) {
     .trim();
 }
 
+function getAppleIdentityToken(result: AppleProviderResponse) {
+  const resultWithLegacyTokenName = result as AppleProviderResponse & {
+    identityToken?: string | null;
+  };
+
+  return (
+    getStringValue(result.idToken) ??
+    getStringValue(resultWithLegacyTokenName.identityToken)
+  );
+}
+
 function getStringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function isAppleSignInCancelled(error: unknown) {
+  const socialLoginError = error as Partial<SocialLoginError>;
+  const message =
+    typeof socialLoginError.message === "string"
+      ? socialLoginError.message.toLowerCase()
+      : "";
+
+  return (
+    socialLoginError.code === "USER_CANCELLED" ||
+    message.includes("cancel")
+  );
 }
 
 function isBlankOrDefaultDisplayName(value: string | null | undefined) {
@@ -485,6 +517,10 @@ function getSafeAppleLoginShape(result: AppleProviderResponse) {
   return {
     hasAccessToken: Boolean(result.accessToken),
     hasAuthorizationCode: Boolean(result.authorizationCode),
+    hasIdentityToken: Boolean(
+      (result as AppleProviderResponse & { identityToken?: string | null })
+        .identityToken,
+    ),
     hasIdToken: Boolean(result.idToken),
     profileKeys: Object.keys(result.profile ?? {}),
     resultKeys: Object.keys(result),
