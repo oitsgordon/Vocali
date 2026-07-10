@@ -1,9 +1,6 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { App } from "@capacitor/app";
-import { Browser } from "@capacitor/browser";
-import { Capacitor } from "@capacitor/core";
 import type { Provider, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
@@ -26,23 +23,9 @@ type AuthResult = {
   ok: boolean;
 };
 
-type NativeOAuthCallbackDiagnostic = {
-  hasCode: boolean;
-  hasError: boolean;
-  hasHash: boolean;
-  hashKeys: string[];
-  queryKeys: string[];
-  startsWithExpectedRedirect: boolean;
-};
-
-const NATIVE_OAUTH_REDIRECT_URL = "com.vocali.app://auth/callback";
 const OAUTH_REDIRECT_STORAGE_KEY = "vocali:oauth-redirect";
 const listeners = new Set<() => void>();
 let hasInitialized = false;
-let hasRegisteredNativeOAuthCallbacks = false;
-let isHandlingNativeOAuthCallback = false;
-let isNativeOAuthFlowActive = false;
-let lastHandledNativeOAuthUrl: string | null = null;
 let syncUserId: string | null = null;
 let snapshot: AuthSnapshot = {
   errorMessage: null,
@@ -69,8 +52,6 @@ export function initializeAuthStore() {
     });
     return;
   }
-
-  registerNativeOAuthCallbacks();
 
   void supabase.auth.getSession().then(({ data, error }) => {
     if (error) {
@@ -191,7 +172,9 @@ export async function signInWithApple(redirectPath = "/home") {
   return signInWithOAuthProvider("apple", redirectPath);
 }
 
-export async function completeOAuthSignIn(codeOverride?: string): Promise<AuthResult> {
+export async function completeOAuthSignIn(
+  codeOverride?: string,
+): Promise<AuthResult> {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
@@ -331,61 +314,6 @@ async function signInWithOAuthProvider(
   window.sessionStorage.setItem(OAUTH_REDIRECT_STORAGE_KEY, safeRedirectPath);
   updateSnapshot({ errorMessage: null });
 
-  if (isNativeIosApp()) {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: NATIVE_OAUTH_REDIRECT_URL,
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error) {
-      console.error("[Vocali OAuth] Supabase OAuth error", error);
-      return {
-        ok: false,
-        error: "Could not open sign-in. Please try again.",
-      };
-    }
-
-    if (!data.url) {
-      return {
-        ok: false,
-        error: "Sign-in URL was not created.",
-      };
-    }
-
-    console.info("[Vocali OAuth] Native OAuth start", {
-      provider,
-      platform: Capacitor.getPlatform(),
-      isNative: Capacitor.isNativePlatform(),
-      hasUrl: Boolean(data.url),
-      urlStart: data.url?.slice(0, 80),
-    });
-
-    if (!Capacitor.isPluginAvailable("Browser")) {
-      console.error("[Vocali OAuth] Browser plugin unavailable");
-      return {
-        ok: false,
-        error: "Sign-in is not available in this build.",
-      };
-    }
-
-    try {
-      isNativeOAuthFlowActive = true;
-      await Browser.open({ url: data.url });
-    } catch (error) {
-      console.error("[Vocali OAuth] Browser.open failed", error);
-      isNativeOAuthFlowActive = false;
-      return {
-        ok: false,
-        error: "Could not open the sign-in window.",
-      };
-    }
-
-    return { ok: true, error: null };
-  }
-
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
@@ -394,147 +322,6 @@ async function signInWithOAuthProvider(
   });
 
   return error ? { ok: false, error: error.message } : { ok: true, error: null };
-}
-
-function registerNativeOAuthCallbacks() {
-  if (!isNativeIosApp() || hasRegisteredNativeOAuthCallbacks) {
-    return;
-  }
-
-  hasRegisteredNativeOAuthCallbacks = true;
-
-  void App.addListener("appUrlOpen", (event) => {
-    void handleNativeOAuthCallback(event.url);
-  });
-
-  void Browser.addListener("browserFinished", () => {
-    if (!isNativeOAuthFlowActive || isHandlingNativeOAuthCallback) {
-      return;
-    }
-
-    isNativeOAuthFlowActive = false;
-    updateSnapshot({
-      errorMessage: "Sign-in was cancelled or could not finish.",
-      isReady: true,
-    });
-  });
-
-  void App.getLaunchUrl().then((launchUrl) => {
-    if (launchUrl?.url) {
-      void handleNativeOAuthCallback(launchUrl.url);
-    }
-  });
-}
-
-async function handleNativeOAuthCallback(url: string) {
-  const callbackDiagnostic = getNativeOAuthCallbackDiagnostic(url);
-
-  console.info("[Vocali OAuth] Native callback received", callbackDiagnostic);
-
-  if (
-    !callbackDiagnostic.startsWithExpectedRedirect ||
-    url === lastHandledNativeOAuthUrl ||
-    isHandlingNativeOAuthCallback
-  ) {
-    return;
-  }
-
-  lastHandledNativeOAuthUrl = url;
-  isHandlingNativeOAuthCallback = true;
-  isNativeOAuthFlowActive = false;
-
-  try {
-    await Browser.close();
-  } catch {
-    // Browser may already be closed by the system.
-  }
-
-  const callbackParams = getNativeOAuthCallbackParams(url);
-  const oauthError =
-    callbackParams.get("error_description") ?? callbackParams.get("error");
-
-  if (oauthError) {
-    console.error("[Vocali OAuth] Native callback error", oauthError);
-    updateSnapshot({
-      errorMessage: "Sign-in was cancelled or could not finish.",
-      isReady: true,
-    });
-    isHandlingNativeOAuthCallback = false;
-    return;
-  }
-
-  const code = callbackParams.get("code");
-
-  if (!code) {
-    console.error(
-      "[Vocali OAuth] Native callback missing code",
-      callbackDiagnostic,
-    );
-    updateSnapshot({
-      errorMessage: "Sign-in returned without a code.",
-      isReady: true,
-    });
-    isHandlingNativeOAuthCallback = false;
-    return;
-  }
-
-  const result = await completeOAuthSignIn(code);
-  isHandlingNativeOAuthCallback = false;
-
-  if (!result.ok) {
-    updateSnapshot({
-      errorMessage: result.error ?? "Sign-in could not finish.",
-      isReady: true,
-    });
-    return;
-  }
-
-  window.location.assign(consumeOAuthRedirectPath("/home"));
-}
-
-function getNativeOAuthCallbackParams(url: string) {
-  const callbackUrl = new URL(url);
-  const params = new URLSearchParams(callbackUrl.search);
-
-  if (callbackUrl.hash) {
-    const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
-    hashParams.forEach((value, key) => {
-      if (!params.has(key)) {
-        params.set(key, value);
-      }
-    });
-  }
-
-  return params;
-}
-
-function getNativeOAuthCallbackDiagnostic(
-  url: string,
-): NativeOAuthCallbackDiagnostic {
-  const callbackUrl = new URL(url);
-  const queryParams = callbackUrl.searchParams;
-  const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
-
-  return {
-    startsWithExpectedRedirect: url.startsWith(NATIVE_OAUTH_REDIRECT_URL),
-    hasCode: queryParams.has("code") || hashParams.has("code"),
-    hasError:
-      queryParams.has("error") ||
-      queryParams.has("error_description") ||
-      hashParams.has("error") ||
-      hashParams.has("error_description"),
-    hasHash: Boolean(callbackUrl.hash),
-    queryKeys: Array.from(queryParams.keys()),
-    hashKeys: Array.from(hashParams.keys()),
-  };
-}
-
-function isNativeIosApp() {
-  return (
-    typeof window !== "undefined" &&
-    Capacitor.isNativePlatform() &&
-    Capacitor.getPlatform() === "ios"
-  );
 }
 
 function updateSnapshot(nextSnapshot: Partial<AuthSnapshot>) {

@@ -26,6 +26,8 @@ import {
 type AuthMode = "login" | "signup";
 type OAuthProvider = "apple" | "google";
 
+const isSocialAuthEnabled = false;
+
 export function LoginForm({
   initialMode,
   redirectPath,
@@ -176,36 +178,44 @@ export function LoginForm({
             </div>
           ) : (
             <div className="mt-5">
-              <div className="space-y-2.5">
-                <OAuthButton
-                  disabled={
-                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
-                  }
-                  isLoading={activeOAuthProvider === "apple"}
-                  onClick={() => void handleOAuthSignIn("apple")}
-                  variant="apple"
-                >
-                  Continue with Apple
-                </OAuthButton>
-                <OAuthButton
-                  disabled={
-                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
-                  }
-                  isLoading={activeOAuthProvider === "google"}
-                  onClick={() => void handleOAuthSignIn("google")}
-                  variant="google"
-                >
-                  Continue with Google
-                </OAuthButton>
-              </div>
+              {isSocialAuthEnabled ? (
+                <>
+                  <div className="space-y-2.5">
+                    <OAuthButton
+                      disabled={
+                        isSubmitting ||
+                        Boolean(activeOAuthProvider) ||
+                        !auth.isReady
+                      }
+                      isLoading={activeOAuthProvider === "apple"}
+                      onClick={() => void handleOAuthSignIn("apple")}
+                      variant="apple"
+                    >
+                      Continue with Apple
+                    </OAuthButton>
+                    <OAuthButton
+                      disabled={
+                        isSubmitting ||
+                        Boolean(activeOAuthProvider) ||
+                        !auth.isReady
+                      }
+                      isLoading={activeOAuthProvider === "google"}
+                      onClick={() => void handleOAuthSignIn("google")}
+                      variant="google"
+                    >
+                      Continue with Google
+                    </OAuthButton>
+                  </div>
 
-              <div className="my-3 flex items-center gap-3">
-                <span className="h-px flex-1 bg-vocali-border" />
-                <span className="text-xs font-bold text-vocali-muted">
-                  or use email
-                </span>
-                <span className="h-px flex-1 bg-vocali-border" />
-              </div>
+                  <div className="my-3 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-vocali-border" />
+                    <span className="text-xs font-bold text-vocali-muted">
+                      or use email
+                    </span>
+                    <span className="h-px flex-1 bg-vocali-border" />
+                  </div>
+                </>
+              ) : null}
 
               <form onSubmit={handleSubmit} className="space-y-3">
                 {isSignup ? (
