@@ -26,6 +26,15 @@ type AuthResult = {
   ok: boolean;
 };
 
+type NativeOAuthCallbackDiagnostic = {
+  hasCode: boolean;
+  hasError: boolean;
+  hasHash: boolean;
+  hashKeys: string[];
+  queryKeys: string[];
+  startsWithExpectedRedirect: boolean;
+};
+
 const NATIVE_OAUTH_REDIRECT_URL = "com.vocali.app://auth/callback";
 const OAUTH_REDIRECT_STORAGE_KEY = "vocali:oauth-redirect";
 const listeners = new Set<() => void>();
@@ -205,7 +214,8 @@ export async function completeOAuthSignIn(codeOverride?: string): Promise<AuthRe
       const { data } = await supabase.auth.getSession();
 
       if (!data.session?.user) {
-        return { ok: false, error: error.message };
+        console.error("[Vocali OAuth] Code exchange failed", error);
+        return { ok: false, error: "Sign-in could not finish." };
       }
     }
   }
@@ -417,8 +427,12 @@ function registerNativeOAuthCallbacks() {
 }
 
 async function handleNativeOAuthCallback(url: string) {
+  const callbackDiagnostic = getNativeOAuthCallbackDiagnostic(url);
+
+  console.info("[Vocali OAuth] Native callback received", callbackDiagnostic);
+
   if (
-    !url.startsWith(NATIVE_OAUTH_REDIRECT_URL) ||
+    !callbackDiagnostic.startsWithExpectedRedirect ||
     url === lastHandledNativeOAuthUrl ||
     isHandlingNativeOAuthCallback
   ) {
@@ -440,6 +454,7 @@ async function handleNativeOAuthCallback(url: string) {
     callbackParams.get("error_description") ?? callbackParams.get("error");
 
   if (oauthError) {
+    console.error("[Vocali OAuth] Native callback error", oauthError);
     updateSnapshot({
       errorMessage: "Sign-in was cancelled or could not finish.",
       isReady: true,
@@ -451,8 +466,12 @@ async function handleNativeOAuthCallback(url: string) {
   const code = callbackParams.get("code");
 
   if (!code) {
+    console.error(
+      "[Vocali OAuth] Native callback missing code",
+      callbackDiagnostic,
+    );
     updateSnapshot({
-      errorMessage: "Sign-in was cancelled or could not finish.",
+      errorMessage: "Sign-in returned without a code.",
       isReady: true,
     });
     isHandlingNativeOAuthCallback = false;
@@ -464,7 +483,7 @@ async function handleNativeOAuthCallback(url: string) {
 
   if (!result.ok) {
     updateSnapshot({
-      errorMessage: "Sign-in was cancelled or could not finish.",
+      errorMessage: result.error ?? "Sign-in could not finish.",
       isReady: true,
     });
     return;
@@ -487,6 +506,27 @@ function getNativeOAuthCallbackParams(url: string) {
   }
 
   return params;
+}
+
+function getNativeOAuthCallbackDiagnostic(
+  url: string,
+): NativeOAuthCallbackDiagnostic {
+  const callbackUrl = new URL(url);
+  const queryParams = callbackUrl.searchParams;
+  const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+
+  return {
+    startsWithExpectedRedirect: url.startsWith(NATIVE_OAUTH_REDIRECT_URL),
+    hasCode: queryParams.has("code") || hashParams.has("code"),
+    hasError:
+      queryParams.has("error") ||
+      queryParams.has("error_description") ||
+      hashParams.has("error") ||
+      hashParams.has("error_description"),
+    hasHash: Boolean(callbackUrl.hash),
+    queryKeys: Array.from(queryParams.keys()),
+    hashKeys: Array.from(hashParams.keys()),
+  };
 }
 
 function isNativeIosApp() {
