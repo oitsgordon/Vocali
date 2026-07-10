@@ -14,6 +14,16 @@ const config: CapacitorConfig = {
   ios: {
     allowsLinkPreview: false,
   },
+  plugins: {
+    SocialLogin: {
+      providers: {
+        apple: true,
+        facebook: false,
+        google: false,
+        twitter: false,
+      },
+    },
+  },
 };
 
 export default config;

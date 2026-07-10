@@ -1,9 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { SocialLogin, type AppleProviderResponse } from "@capgo/capacitor-social-login";
+import { Capacitor } from "@capacitor/core";
 import type { Provider, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
+  fetchRemoteProfile,
   setSupabaseSyncUserId,
   syncProfilePreferences,
 } from "@/lib/supabaseRemote";
@@ -26,6 +29,7 @@ type AuthResult = {
 const OAUTH_REDIRECT_STORAGE_KEY = "vocali:oauth-redirect";
 const listeners = new Set<() => void>();
 let hasInitialized = false;
+let hasInitializedNativeAppleSignIn = false;
 let syncUserId: string | null = null;
 let snapshot: AuthSnapshot = {
   errorMessage: null,
@@ -168,8 +172,74 @@ export async function signInWithGoogle(redirectPath = "/home") {
   return signInWithOAuthProvider("google", redirectPath);
 }
 
-export async function signInWithApple(redirectPath = "/home") {
-  return signInWithOAuthProvider("apple", redirectPath);
+export async function signInWithApple() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return {
+      ok: false,
+      error: "Account sync is not configured on this build.",
+    };
+  }
+
+  if (!isNativeAppleSignInAvailable()) {
+    return {
+      ok: false,
+      error: "Apple sign-in is available in the iPhone app.",
+    };
+  }
+
+  console.info("[Vocali Apple Sign-In] native start");
+
+  try {
+    await initializeNativeAppleSignIn();
+    const nonce = createAppleSignInNonce();
+    const appleLoginResult = await SocialLogin.login({
+      provider: "apple",
+      options: {
+        nonce,
+      },
+    });
+    const appleIdToken = appleLoginResult.result.idToken;
+
+    if (!appleIdToken) {
+      console.error(
+        "[Vocali Apple Sign-In] missing identity token",
+        getSafeAppleLoginShape(appleLoginResult.result),
+      );
+      return { ok: false, error: "Apple sign-in could not finish." };
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: appleIdToken,
+      nonce,
+    });
+
+    if (error) {
+      console.error(
+        "[Vocali Apple Sign-In] Supabase signInWithIdToken failed",
+        error,
+      );
+      return { ok: false, error: "Apple sign-in could not finish." };
+    }
+
+    const user = data.user ?? data.session?.user ?? null;
+
+    if (!user) {
+      return { ok: false, error: "Apple sign-in could not finish." };
+    }
+
+    await saveAppleNameIfAvailable(user, appleLoginResult.result.profile);
+    updateSnapshot({ errorMessage: null, isReady: true, user });
+    setSupabaseSyncUserId(user.id);
+    await runUserSync(user.id);
+
+    return { ok: true, error: null };
+  } catch (error) {
+    console.error("[Vocali Apple Sign-In] native failed", error);
+    return { ok: false, error: "Apple sign-in could not finish." };
+  }
 }
 
 export async function completeOAuthSignIn(
@@ -291,7 +361,7 @@ async function runUserSync(userId: string) {
 }
 
 async function signInWithOAuthProvider(
-  provider: Extract<Provider, "apple" | "google">,
+  provider: Extract<Provider, "google">,
   redirectPath: string,
 ): Promise<AuthResult> {
   const supabase = getSupabaseClient();
@@ -322,6 +392,119 @@ async function signInWithOAuthProvider(
   });
 
   return error ? { ok: false, error: error.message } : { ok: true, error: null };
+}
+
+export function isNativeAppleSignInAvailable() {
+  return (
+    typeof window !== "undefined" &&
+    Capacitor.isNativePlatform() &&
+    Capacitor.getPlatform() === "ios" &&
+    Capacitor.isPluginAvailable("SocialLogin")
+  );
+}
+
+async function initializeNativeAppleSignIn() {
+  if (hasInitializedNativeAppleSignIn) {
+    return;
+  }
+
+  await SocialLogin.initialize({
+    apple: {
+      redirectUrl: "",
+    },
+  });
+  hasInitializedNativeAppleSignIn = true;
+}
+
+async function saveAppleNameIfAvailable(
+  user: User,
+  profile: AppleProviderResponse["profile"],
+) {
+  const appleDisplayName = getAppleDisplayName(profile);
+
+  if (!appleDisplayName) {
+    return;
+  }
+
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return;
+  }
+
+  const currentMetadataName =
+    getStringValue(user.user_metadata?.display_name) ??
+    getStringValue(user.user_metadata?.name) ??
+    getStringValue(user.user_metadata?.full_name);
+
+  if (isBlankOrDefaultDisplayName(currentMetadataName)) {
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        display_name: appleDisplayName,
+        full_name: appleDisplayName,
+        name: appleDisplayName,
+      },
+    });
+
+    if (error) {
+      console.error("[Vocali Apple Sign-In] metadata update failed", error);
+    }
+  }
+
+  const remoteProfileResult = await fetchRemoteProfile(user.id);
+  const currentProfileName = remoteProfileResult.profile?.displayName;
+
+  if (isBlankOrDefaultDisplayName(currentProfileName)) {
+    await syncProfilePreferences(
+      {
+        ...(remoteProfileResult.profile ?? defaultUserPreferences),
+        displayName: appleDisplayName,
+      },
+      user.id,
+    );
+  }
+}
+
+function getAppleDisplayName(profile: AppleProviderResponse["profile"]) {
+  return [profile.givenName, profile.familyName]
+    .map((namePart) => namePart?.trim())
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+}
+
+function getStringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function isBlankOrDefaultDisplayName(value: string | null | undefined) {
+  return !value || value === defaultUserPreferences.displayName;
+}
+
+function getSafeAppleLoginShape(result: AppleProviderResponse) {
+  return {
+    hasAccessToken: Boolean(result.accessToken),
+    hasAuthorizationCode: Boolean(result.authorizationCode),
+    hasIdToken: Boolean(result.idToken),
+    profileKeys: Object.keys(result.profile ?? {}),
+    resultKeys: Object.keys(result),
+  };
+}
+
+function createAppleSignInNonce() {
+  const alphabet =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const bytes = new Uint8Array(32);
+
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
 }
 
 function updateSnapshot(nextSnapshot: Partial<AuthSnapshot>) {

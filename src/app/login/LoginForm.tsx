@@ -8,7 +8,7 @@ import {
   EyeOff,
   Loader2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import {
@@ -16,6 +16,7 @@ import {
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
+  isNativeAppleSignInAvailable,
   useAuth,
 } from "@/lib/authStore";
 import {
@@ -26,7 +27,7 @@ import {
 type AuthMode = "login" | "signup";
 type OAuthProvider = "apple" | "google";
 
-const isSocialAuthEnabled = false;
+const isGoogleSignInEnabled = false;
 
 export function LoginForm({
   initialMode,
@@ -46,6 +47,11 @@ export function LoginForm({
   const [message, setMessage] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isAppleSignInEnabled = useSyncExternalStore(
+    subscribeToNativeAuthAvailability,
+    isNativeAppleSignInAvailable,
+    getUnavailableNativeAuthSnapshot,
+  );
   const [oauthProvider, setOauthProvider] = useState<OAuthProvider | null>(
     null,
   );
@@ -119,16 +125,22 @@ export function LoginForm({
 
     const result =
       provider === "apple"
-        ? await signInWithApple(redirectPath)
+        ? await signInWithApple()
         : await signInWithGoogle(redirectPath);
 
     if (!result.ok) {
       setMessage(result.error);
       setOauthProvider(null);
+      return;
     }
+
+    setMessage("Signing you in...");
+    router.replace(redirectPath);
   }
 
   const activeOAuthProvider = auth.errorMessage ? null : oauthProvider;
+  const shouldShowSocialAuth =
+    isAppleSignInEnabled || isGoogleSignInEnabled;
 
   return (
     <ScreenFrame>
@@ -178,33 +190,37 @@ export function LoginForm({
             </div>
           ) : (
             <div className="mt-5">
-              {isSocialAuthEnabled ? (
+              {shouldShowSocialAuth ? (
                 <>
                   <div className="space-y-2.5">
-                    <OAuthButton
-                      disabled={
-                        isSubmitting ||
-                        Boolean(activeOAuthProvider) ||
-                        !auth.isReady
-                      }
-                      isLoading={activeOAuthProvider === "apple"}
-                      onClick={() => void handleOAuthSignIn("apple")}
-                      variant="apple"
-                    >
-                      Continue with Apple
-                    </OAuthButton>
-                    <OAuthButton
-                      disabled={
-                        isSubmitting ||
-                        Boolean(activeOAuthProvider) ||
-                        !auth.isReady
-                      }
-                      isLoading={activeOAuthProvider === "google"}
-                      onClick={() => void handleOAuthSignIn("google")}
-                      variant="google"
-                    >
-                      Continue with Google
-                    </OAuthButton>
+                    {isAppleSignInEnabled ? (
+                      <OAuthButton
+                        disabled={
+                          isSubmitting ||
+                          Boolean(activeOAuthProvider) ||
+                          !auth.isReady
+                        }
+                        isLoading={activeOAuthProvider === "apple"}
+                        onClick={() => void handleOAuthSignIn("apple")}
+                        variant="apple"
+                      >
+                        Continue with Apple
+                      </OAuthButton>
+                    ) : null}
+                    {isGoogleSignInEnabled ? (
+                      <OAuthButton
+                        disabled={
+                          isSubmitting ||
+                          Boolean(activeOAuthProvider) ||
+                          !auth.isReady
+                        }
+                        isLoading={activeOAuthProvider === "google"}
+                        onClick={() => void handleOAuthSignIn("google")}
+                        variant="google"
+                      >
+                        Continue with Google
+                      </OAuthButton>
+                    ) : null}
                   </div>
 
                   <div className="my-3 flex items-center gap-3">
@@ -323,6 +339,22 @@ export function LoginForm({
       </section>
     </ScreenFrame>
   );
+}
+
+function subscribeToNativeAuthAvailability(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const timeoutId = window.setTimeout(onStoreChange, 0);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}
+
+function getUnavailableNativeAuthSnapshot() {
+  return false;
 }
 
 function OAuthButton({
