@@ -197,11 +197,12 @@ export async function signInWithApple() {
 
   try {
     await initializeNativeAppleSignIn();
-    const nonce = createAppleSignInNonce();
+    const rawNonce = createAppleSignInNonce();
+    const hashedNonce = await sha256Hex(rawNonce);
     const appleLoginResult = await SocialLogin.login({
       provider: "apple",
       options: {
-        nonce,
+        nonce: hashedNonce,
       },
     });
     const appleIdToken = getAppleIdentityToken(appleLoginResult.result);
@@ -214,16 +215,26 @@ export async function signInWithApple() {
       return { ok: false, error: "Apple sign-in could not finish." };
     }
 
+    const tokenDiagnostics = getAppleTokenDiagnostics(appleIdToken);
+    console.info(
+      "[Vocali Apple Sign-In] identity token diagnostics",
+      tokenDiagnostics,
+    );
+
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "apple",
       token: appleIdToken,
-      nonce,
+      nonce: rawNonce,
     });
 
     if (error) {
       console.error(
         "[Vocali Apple Sign-In] Supabase signInWithIdToken failed",
-        error,
+        {
+          message: error.message,
+          status: getErrorStatus(error),
+          token: tokenDiagnostics,
+        },
       );
       return { ok: false, error: "Apple sign-in could not finish." };
     }
@@ -541,6 +552,72 @@ function createAppleSignInNonce() {
   }
 
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
+async function sha256Hex(value: string) {
+  const encodedValue = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", encodedValue);
+
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+function getAppleTokenDiagnostics(token: string) {
+  const payload = decodeJwtPayload(token);
+  const nonce = getStringValue(payload?.nonce);
+
+  return {
+    aud: getJwtClaimForDiagnostics(payload?.aud),
+    iss: getJwtClaimForDiagnostics(payload?.iss),
+    hasNonce: Boolean(nonce),
+    nonceLength: nonce?.length ?? 0,
+    hasEmail: Boolean(getStringValue(payload?.email)),
+  };
+}
+
+function decodeJwtPayload(token: string) {
+  const payload = token.split(".")[1];
+
+  if (!payload || typeof atob === "undefined") {
+    return null;
+  }
+
+  try {
+    const normalizedPayload = payload
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const decodedPayload = atob(normalizedPayload);
+    const parsedPayload: unknown = JSON.parse(decodedPayload);
+
+    return typeof parsedPayload === "object" && parsedPayload !== null
+      ? (parsedPayload as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function getJwtClaimForDiagnostics(value: unknown) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((item) => typeof item === "string");
+  }
+
+  return null;
+}
+
+function getErrorStatus(error: unknown) {
+  return typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+    ? error.status
+    : null;
 }
 
 function updateSnapshot(nextSnapshot: Partial<AuthSnapshot>) {
