@@ -75,16 +75,154 @@ workflows:
           xcode-project use-profiles \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Diagnose iOS signing setup
+        script: |
+          set -euo pipefail
+
+          PROJECT_PATH="$CM_BUILD_DIR/$XCODE_PROJECT"
+          SETTINGS_FILE="$CM_BUILD_DIR/build/ios-signing-build-settings.txt"
+          mkdir -p "$CM_BUILD_DIR/build"
+
+          echo "Selected Xcode signing build settings:"
+          xcodebuild -showBuildSettings \
+            -project "$PROJECT_PATH" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release > "$SETTINGS_FILE"
+
+          grep -E "^[[:space:]]*(PROVISIONING_PROFILE_SPECIFIER|CODE_SIGN_ENTITLEMENTS|PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM) =" "$SETTINGS_FILE" || true
+
+          echo "Installed App Store provisioning profiles for $BUNDLE_ID:"
+          python3 <<'PY'
+          import glob
+          import os
+          import plistlib
+          import subprocess
+          import sys
+
+          bundle_id = os.environ.get("BUNDLE_ID", "com.vocali.app")
+          profile_paths = glob.glob(
+              os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision")
+          )
+          matching_profiles = []
+
+          for profile_path in profile_paths:
+              decoded_profile = subprocess.run(
+                  ["security", "cms", "-D", "-i", profile_path],
+                  check=False,
+                  capture_output=True,
+              )
+
+              if decoded_profile.returncode != 0:
+                  continue
+
+              try:
+                  profile = plistlib.loads(decoded_profile.stdout)
+              except Exception:
+                  continue
+
+              entitlements = profile.get("Entitlements", {})
+              application_identifier = entitlements.get("application-identifier", "")
+              matches_bundle = application_identifier.endswith(f".{bundle_id}")
+
+              if not matches_bundle:
+                  continue
+
+              is_app_store = (
+                  not profile.get("ProvisionedDevices")
+                  and not profile.get("ProvisionsAllDevices", False)
+                  and entitlements.get("get-task-allow") is False
+              )
+              apple_signin = entitlements.get("com.apple.developer.applesignin")
+              has_apple_signin = isinstance(apple_signin, list) and "Default" in apple_signin
+              team_identifier = ",".join(profile.get("TeamIdentifier", []))
+
+              profile_summary = {
+                  "name": profile.get("Name", ""),
+                  "uuid": profile.get("UUID", ""),
+                  "team_identifier": team_identifier,
+                  "application_identifier": application_identifier,
+                  "is_app_store": is_app_store,
+                  "has_apple_signin": has_apple_signin,
+                  "apple_signin": apple_signin,
+                  "expiration": profile.get("ExpirationDate", ""),
+              }
+              matching_profiles.append(profile_summary)
+
+          if not matching_profiles:
+              print(f"No installed provisioning profiles match {bundle_id}.")
+          else:
+              for index, profile in enumerate(matching_profiles, start=1):
+                  print(f"[{index}] Name: {profile['name']}")
+                  print(f"    UUID: {profile['uuid']}")
+                  print(f"    TeamIdentifier: {profile['team_identifier']}")
+                  print(f"    application-identifier: {profile['application_identifier']}")
+                  print(f"    app_store: {profile['is_app_store']}")
+                  print(f"    com.apple.developer.applesignin: {profile['apple_signin']}")
+                  print(f"    Expires: {profile['expiration']}")
+
+          app_store_profiles = [
+              profile for profile in matching_profiles if profile["is_app_store"]
+          ]
+
+          if len(app_store_profiles) > 1:
+              print(
+                  f"Found {len(app_store_profiles)} matching App Store profiles for {bundle_id}; keep exactly one to avoid ambiguous signing.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          if not any(profile["has_apple_signin"] for profile in app_store_profiles):
+              print(
+                  f"No matching App Store provisioning profile for {bundle_id} includes com.apple.developer.applesignin.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          PY
       - name: Build signed App Store IPA
         script: |
+          set -euo pipefail
+
           echo "Committed iOS build numbers:"
           grep "CURRENT_PROJECT_VERSION" "$CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj"
 
+          set +e
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
+          BUILD_IPA_STATUS=$?
+          set -e
+
+          if [ "$BUILD_IPA_STATUS" -ne 0 ]; then
+            echo "xcode-project build-ipa failed with status $BUILD_IPA_STATUS"
+            echo "Recent xcodebuild text logs:"
+
+            for LOG_DIR in /tmp/xcodebuild_logs "$HOME/Library/Developer/Xcode/DerivedData"; do
+              if [ ! -d "$LOG_DIR" ]; then
+                continue
+              fi
+
+              find "$LOG_DIR" -type f -name "*.log" | while IFS= read -r LOG_FILE; do
+                echo "----- $LOG_FILE -----"
+                tail -n 200 "$LOG_FILE" || true
+              done
+            done
+
+            echo "Extracted xcodebuild error lines:"
+            for LOG_DIR in /tmp/xcodebuild_logs "$HOME/Library/Developer/Xcode/DerivedData"; do
+              if [ ! -d "$LOG_DIR" ]; then
+                continue
+              fi
+
+              find "$LOG_DIR" -type f -name "*.log" | while IFS= read -r LOG_FILE; do
+                grep -niE "error:|fatal error:|CodeSign|Provisioning profile|requires a provisioning profile|No profiles|Signing for|Command SwiftCompile failed|CompileSwift failed|SwiftCompile|Ld |clang: error|PhaseScriptExecution" "$LOG_FILE" || true
+              done | tail -n 200
+            done
+
+            exit "$BUILD_IPA_STATUS"
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios-signing-build-settings.txt
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
