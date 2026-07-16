@@ -133,12 +133,27 @@ Use a real iPhone when testing recording. The Simulator may not behave the same 
 
 ## Notes
 
-- This setup does not add Supabase, payments, RevenueCat, service workers, or offline caching.
-- Recordings and practice history remain local to the app WebView unless submitted for transcription.
+- Supabase provides account authentication and cross-device profile/attempt sync when the public Supabase environment variables are configured.
+- Recordings remain in the device browser database; practice attempts are cached locally and synced to Supabase for signed-in users.
+- The app does not currently include payments, RevenueCat, service workers, or offline caching.
 - The wrapper currently depends on the hosted Vercel app being available.
 - If the Vercel URL changes, update `capacitor.config.ts` and run `npm run cap:sync:ios` again.
 
-## Codemagic Cloud iOS Build
+## Development Workflow
+
+Run the complete local quality gate before considering a change ready:
+
+```bash
+npm run check
+```
+
+This runs ESLint, TypeScript checking, unit tests, and a production Next.js build. GitHub runs the same command for pull requests and pushes to `main`.
+
+Most changes under `src/` are web-only. Use a branch and pull request, test the Vercel preview on a mobile viewport, and merge after the `Quality` workflow passes. Because the installed Capacitor wrapper loads the production Vercel URL, web-only changes do not require a new TestFlight build.
+
+Changes to `ios/`, `capacitor.config.ts`, native plugins, permissions, entitlements, signing, icons, splash assets, or native server configuration require native verification and may require a new TestFlight build.
+
+## Codemagic TestFlight Release
 
 The Codemagic workflow lives at:
 
@@ -146,9 +161,7 @@ The Codemagic workflow lives at:
 codemagic.yaml
 ```
 
-This first workflow builds Vocali as a Capacitor iOS app for the iOS Simulator without Apple code signing. It is meant to confirm that Codemagic can read the repository, install dependencies, sync Capacitor, and build the native iOS wrapper.
-
-It does not rewrite Vocali in React Native. It keeps the current Next.js app hosted on Vercel and wraps that production URL with Capacitor.
+The workflow builds a signed App Store IPA, uploads it to App Store Connect, and submits it to TestFlight. It retains the Next.js-on-Vercel architecture and packages the hosted application in the Capacitor iOS wrapper.
 
 ### Codemagic Workflow Details
 
@@ -161,68 +174,33 @@ Xcode project: ios/App/App.xcodeproj
 Scheme: App
 Bundle ID: com.vocali.app
 Server URL: CAPACITOR_SERVER_URL
+Trigger: a pushed tag matching ios-v*
 ```
 
 The build steps are:
 
 1. Install npm dependencies with `npm ci`.
-2. Run `npm run lint`.
-3. Run `npm run build`.
-4. Run `npx cap sync ios`.
-5. Build the iOS project with `xcodebuild`.
+2. Run the full `npm run check` quality gate.
+3. Sync the Capacitor iOS project.
+4. Apply App Store signing profiles.
+5. Read the latest uploaded Apple build number and increment it automatically.
+6. Build the signed IPA and upload it to TestFlight.
 
-### Codemagic Environment Variables
+### Release Trigger
 
-Add or confirm these in Codemagic when you connect the repository:
+TestFlight releases are deliberately separate from ordinary pushes. After a native change has been reviewed and merged, create and push a unique tag beginning with `ios-v`, for example `ios-v1.0.0`. Codemagic must have a repository webhook configured for tag events.
+
+Creating or pushing a release tag uploads an external build, so it should only be done after explicit release approval.
+
+### Codemagic Configuration
+
+The workflow expects the Codemagic App Store Connect integration named `vocali-upload`, an Apple Distribution certificate, and an App Store provisioning profile for `com.vocali.app`. Confirm these non-secret values in `codemagic.yaml`:
 
 ```text
 CAPACITOR_SERVER_URL=https://vocali-zeta.vercel.app/
-```
-
-For the first unsigned simulator build, this is the only app-specific variable you need.
-
-For a later signed iPhone/TestFlight build, you will also need Apple signing values in Codemagic:
-
-```text
-APPLE_TEAM_ID=your Apple Developer Team ID
 BUNDLE_ID=com.vocali.app
-APP_STORE_CONNECT_ISSUER_ID=from App Store Connect API
-APP_STORE_CONNECT_KEY_IDENTIFIER=from App Store Connect API
-APP_STORE_CONNECT_PRIVATE_KEY=private API key stored securely in Codemagic
+APP_APPLE_ID=6780807774
+IOS_MARKETING_VERSION=1.0
 ```
-
-You may also need signing certificate and provisioning profile references, depending on whether you use Codemagic automatic signing or manual signing.
 
 Do not commit any Apple private keys, certificates, provisioning profiles, or API secrets into this repository.
-
-Before running it in Codemagic:
-
-1. Push this repository to GitHub, GitLab, or Bitbucket.
-2. Connect the repository in Codemagic.
-3. Click `Check for configuration file`.
-4. Select the `iOS Capacitor cloud build` workflow.
-5. Confirm the `CAPACITOR_SERVER_URL` value points to the current production Vercel URL.
-6. Start a manual build from Codemagic.
-
-From Windows PowerShell, commit and push the workflow file with:
-
-```powershell
-git add codemagic.yaml capacitor.config.ts README.md package.json package-lock.json ios
-git commit -m "Add Codemagic iOS workflow"
-git push
-```
-
-### What Still Needs Apple Setup
-
-To install the app on a real iPhone or submit to TestFlight, you will still need Apple Developer code signing configured in Codemagic.
-
-Manual Apple/Codemagic steps still required:
-
-1. Enroll in the Apple Developer Program if you have not already.
-2. Create or confirm the bundle identifier `com.vocali.app` in Apple Developer.
-3. Create the app record in App Store Connect.
-4. Create an App Store Connect API key for Codemagic.
-5. Configure Codemagic iOS code signing.
-6. Switch from the unsigned simulator build to a signed archive/export workflow.
-
-This first workflow deliberately avoids signing so you can verify the cloud build quickly before setting up App Store credentials.
