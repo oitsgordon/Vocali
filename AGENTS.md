@@ -23,9 +23,11 @@ For implementation tasks, own the complete local loop:
 4. Add or update tests for behavior that can be verified automatically.
 5. Run the narrowest relevant checks during development, then run `npm run check` before declaring the task complete.
 6. Review the final diff for correctness, regressions, secrets, and accidental unrelated edits.
-7. Report the outcome, verification performed, and any remaining risk.
+7. Commit the verified change on a `codex/` feature branch, push it, create or update a pull request to `main`, wait for required GitHub checks, and merge it when the checks pass.
+8. Verify that `origin/main` contains the merged change so the repository is ready for a manual Codemagic build.
+9. Report the outcome, verification performed, merged commit, and any remaining risk.
 
-Do not commit, push, create a pull request, create a release tag, or deploy unless the user explicitly asks. When requested, run those Git and release operations directly instead of giving the user commands to copy.
+The user has provided standing authorization for the commit, push, pull-request, and merge steps above after requested implementation work passes verification. Run those Git operations directly instead of giving the user commands to copy. Do not create or push a release tag, start a Codemagic build, submit a TestFlight build, or deploy unless the user explicitly requests that release action.
 
 ## Verification commands
 
@@ -45,6 +47,8 @@ If a relevant automated test is not practical, document the exact manual verific
 - Keep commits focused and use messages that describe the user-visible or operational outcome.
 - Before committing, inspect `git diff` and `git status`; preserve unrelated user changes.
 - GitHub pull requests must pass the `Quality` workflow before merge.
+- After merging, update local `main` from `origin/main` and confirm both point to the merged commit.
+- If branch protection, failing checks, merge conflicts, credentials, or external service permissions prevent the merge, stop before bypassing the protection and report the blocker.
 
 ## Delivery lanes
 
