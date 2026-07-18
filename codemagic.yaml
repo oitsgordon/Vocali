@@ -45,6 +45,26 @@ workflows:
           echo "Xcode project: $XCODE_PROJECT"
           echo "Xcode scheme: $XCODE_SCHEME"
           echo "Capacitor server URL: $CAPACITOR_SERVER_URL"
+      - name: Verify hosted release pages
+        script: |
+          set -euo pipefail
+
+          APP_HTML="$(curl --fail --silent --show-error --location "$CAPACITOR_SERVER_URL")"
+          PRIVACY_HTML="$(curl --fail --silent --show-error --location "${CAPACITOR_SERVER_URL%/}/privacy")"
+          SUPPORT_HTML="$(curl --fail --silent --show-error --location "${CAPACITOR_SERVER_URL%/}/support")"
+
+          printf '%s' "$APP_HTML" | grep -qi "Vocali" || {
+            echo "The hosted production app did not contain the expected Vocali marker."
+            exit 1
+          }
+          printf '%s' "$PRIVACY_HTML" | grep -qi "Privacy" || {
+            echo "The hosted privacy page is missing or incomplete."
+            exit 1
+          }
+          printf '%s' "$SUPPORT_HTML" | grep -qi "mailto:" || {
+            echo "The hosted support page does not contain a configured support email."
+            exit 1
+          }
       - name: Verify App Store Connect app access
         script: |
           set -e
@@ -80,11 +100,20 @@ workflows:
       - name: Sync Capacitor iOS project
         script: |
           npx cap sync ios
+      - name: Verify app privacy manifest
+        script: |
+          set -euo pipefail
+
+          APP_PRIVACY_MANIFEST="$CM_BUILD_DIR/ios/App/App/PrivacyInfo.xcprivacy"
+          test -f "$APP_PRIVACY_MANIFEST"
+          plutil -lint "$APP_PRIVACY_MANIFEST"
+
+          echo "Privacy manifests included by the app and native dependencies:"
+          find "$CM_BUILD_DIR/ios" -name "PrivacyInfo.xcprivacy" -print
       - name: Set up code signing settings on Xcode project
         script: |
           xcode-project use-profiles \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --custom-export-options='{"testFlightInternalTestingOnly": true}'
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
       - name: Set next App Store build number
         script: |
           set -euo pipefail
