@@ -6,22 +6,26 @@ import {
   Check,
   HardDrive,
   History,
+  KeyRound,
+  LifeBuoy,
   Pencil,
   RotateCcw,
   Settings,
+  ShieldCheck,
   Trash2,
+  UserRoundX,
   Volume2,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
+import { deleteAccount, signOut, useAuth } from "@/lib/authStore";
+import { clearAllLocalVocaliData } from "@/lib/localDataCleanup";
 import { clearAttempts } from "@/lib/attemptStorage";
-import { clearStoredDailyChallenge } from "@/lib/dailyChallenge";
 import { clearRecordings } from "@/lib/recordingStorage";
-import { clearStreakCelebration } from "@/lib/streakCelebration";
 import { useUserPreferences } from "@/lib/useUserPreferences";
 import {
-  clearUserPreferences,
   dailyGoalOptions,
   defaultUserPreferences,
   focusAreaOptions,
@@ -30,45 +34,12 @@ import {
   type UserPreferences,
 } from "@/lib/userPreferences";
 
-const onboardingStorageKey = "vocali:onboarding";
-const practicePreferencesStorageKey = "vocali:practice-preferences";
-
 type LocalDataMessage = {
   tone: "success" | "warning";
   text: string;
 };
 
 type SavePreferenceStatus = "idle" | "saving" | "saved";
-
-function canUseLocalStorage() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  try {
-    return Boolean(window.localStorage);
-  } catch {
-    return false;
-  }
-}
-
-function clearOnboardingState() {
-  if (!canUseLocalStorage()) {
-    return false;
-  }
-
-  window.localStorage.removeItem(onboardingStorageKey);
-  return true;
-}
-
-function clearPracticePreferences() {
-  if (!canUseLocalStorage()) {
-    return false;
-  }
-
-  window.localStorage.removeItem(practicePreferencesStorageKey);
-  return true;
-}
 
 export default function SettingsPage() {
   const {
@@ -96,8 +67,12 @@ function SettingsContent({
   initialPreferences: UserPreferences;
   savePreferences: (preferences: UserPreferences) => boolean;
 }) {
+  const auth = useAuth();
   const [message, setMessage] = useState<LocalDataMessage | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [savePreferenceStatus, setSavePreferenceStatus] =
     useState<SavePreferenceStatus>("idle");
   const [preferences, setPreferences] = useState<UserPreferences>(
@@ -153,7 +128,14 @@ function SettingsContent({
       return;
     }
 
-    const didClear = clearOnboardingState();
+    let didClear = false;
+
+    try {
+      window.localStorage.removeItem("vocali:onboarding");
+      didClear = true;
+    } catch {
+      didClear = false;
+    }
     setMessage({
       tone: didClear ? "success" : "warning",
       text: didClear
@@ -196,35 +178,45 @@ function SettingsContent({
     }
 
     setIsClearing(true);
-    clearAttempts();
-    const didClearRecordings = await clearRecordings();
-    const didClearOnboarding = clearOnboardingState();
-    const didClearPreferences = clearPracticePreferences();
-    const didClearUserPreferences = clearUserPreferences();
-    const didClearDailyChallenge = clearStoredDailyChallenge();
-    const didClearStreakCelebration = clearStreakCelebration();
+    const result = await clearAllLocalVocaliData();
     setPreferences(defaultUserPreferences);
     setIsClearing(false);
     setMessage({
-      tone:
-        didClearRecordings &&
-        didClearOnboarding &&
-        didClearPreferences &&
-        didClearUserPreferences &&
-        didClearDailyChallenge &&
-        didClearStreakCelebration
-          ? "success"
-          : "warning",
-      text:
-        didClearRecordings &&
-        didClearOnboarding &&
-        didClearPreferences &&
-        didClearUserPreferences &&
-        didClearDailyChallenge &&
-        didClearStreakCelebration
-          ? "All local Vocali data has been reset in this browser."
-          : "Practice history was cleared. Some browser storage could not be opened.",
+      tone: result.ok ? "success" : "warning",
+      text: result.ok
+        ? "All local Vocali data has been reset in this browser."
+        : "Practice history was cleared. Some browser storage could not be opened.",
     });
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmation !== "DELETE" || isDeletingAccount) {
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setMessage(null);
+    const result = await deleteAccount();
+
+    if (!result.ok) {
+      setIsDeletingAccount(false);
+      setMessage({
+        tone: "warning",
+        text: result.error ?? "Your account could not be deleted.",
+      });
+      return;
+    }
+
+    await clearAllLocalVocaliData();
+    await signOut();
+
+    if (result.manualAppleRevocationRequired) {
+      window.alert(
+        "Your Vocali account was deleted. To remove the remaining Apple authorization, open iPhone Settings, tap your name, choose Sign in with Apple, select Vocali, then tap Delete.",
+      );
+    }
+
+    window.location.replace("/");
   }
 
   return (
@@ -341,6 +333,60 @@ function SettingsContent({
         <section className="mt-6 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-vocali-teal/12 text-vocali-teal">
+              <ShieldCheck className="h-6 w-6" strokeWidth={2.75} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-vocali-teal-deep">
+                Account and privacy
+              </h2>
+              <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
+                {auth.user?.email ?? "Your signed-in Vocali account"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {auth.user?.identities?.some(
+              (identity) => identity.provider === "email",
+            ) ? (
+              <SettingsLink
+                href="/reset-password"
+                icon={KeyRound}
+                label="Change password"
+              />
+            ) : null}
+            <SettingsLink href="/privacy" icon={ShieldCheck} label="Privacy" />
+            <SettingsLink href="/support" icon={LifeBuoy} label="Support" />
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteConfirmation("");
+                setIsDeleteDialogOpen(true);
+              }}
+              className="flex w-full items-center justify-between gap-4 rounded-[1.1rem] bg-vocali-orange/10 px-4 py-3 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <UserRoundX
+                  className="h-5 w-5 shrink-0 text-vocali-orange"
+                  strokeWidth={3}
+                />
+                <div>
+                  <p className="text-sm font-black text-vocali-orange">
+                    Delete account permanently
+                  </p>
+                  <p className="mt-1 text-xs font-bold leading-4 text-vocali-muted">
+                    Removes your account and synced data, not just this device.
+                  </p>
+                </div>
+              </div>
+              <ChevronRightIcon />
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-vocali-teal/12 text-vocali-teal">
               <HardDrive className="h-6 w-6" strokeWidth={2.75} />
             </div>
             <div>
@@ -403,6 +449,70 @@ function SettingsContent({
           Back to profile
         </Link>
         </section>
+        {isDeleteDialogOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-vocali-teal-deep/55 p-4 sm:items-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+          >
+            <div className="w-full max-w-[430px] rounded-[1.75rem] bg-white p-5 shadow-[0_24px_60px_rgb(7_50_71/0.3)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black text-vocali-orange">
+                    Permanent action
+                  </p>
+                  <h2
+                    id="delete-account-title"
+                    className="mt-1 text-2xl font-black text-vocali-teal-deep"
+                  >
+                    Delete your account?
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  disabled={isDeletingAccount}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-vocali-cream text-vocali-teal-deep disabled:opacity-50"
+                  aria-label="Close account deletion confirmation"
+                >
+                  <X className="h-5 w-5" strokeWidth={3} />
+                </button>
+              </div>
+              <p className="mt-4 text-sm font-bold leading-6 text-vocali-muted">
+                This removes your Vocali account, profile, synced practice
+                history, transcripts, and metrics. It cannot be undone. Type
+                DELETE to continue.
+              </p>
+              <label className="mt-4 block">
+                <span className="sr-only">Type DELETE to confirm</span>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(event) =>
+                    setDeleteConfirmation(event.target.value)
+                  }
+                  autoComplete="off"
+                  placeholder="DELETE"
+                  className="h-12 w-full rounded-[1rem] border-2 border-vocali-border bg-vocali-cream px-4 text-base font-black text-vocali-teal-deep outline-none focus:border-vocali-orange"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void handleDeleteAccount()}
+                disabled={
+                  deleteConfirmation !== "DELETE" || isDeletingAccount
+                }
+                className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-vocali-orange px-4 text-base font-black text-white disabled:opacity-45"
+              >
+                <Trash2 className="h-5 w-5" strokeWidth={3} />
+                {isDeletingAccount
+                  ? "Deleting account..."
+                  : "Delete account permanently"}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </ScreenFrame>
     </AuthGate>
   );
@@ -414,6 +524,29 @@ type SettingsActionProps = {
   label: string;
   onClick: () => void | Promise<void>;
 };
+
+function SettingsLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof History;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex w-full items-center justify-between gap-4 rounded-[1.1rem] bg-vocali-cream px-4 py-3 text-left"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="h-5 w-5 shrink-0 text-vocali-teal" strokeWidth={3} />
+        <p className="text-sm font-black text-vocali-teal-deep">{label}</p>
+      </div>
+      <ChevronRightIcon />
+    </Link>
+  );
+}
 
 function PreferenceChoices<T extends FocusArea | DailyGoal>({
   label,

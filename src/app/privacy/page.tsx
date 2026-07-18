@@ -1,40 +1,56 @@
 import Link from "next/link";
-import { ArrowLeft, Database, Mic, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock3,
+  Cloud,
+  Database,
+  Mail,
+  Mic,
+  UserRound,
+} from "lucide-react";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 
 const privacySections = [
   {
-    title: "Your recordings",
-    icon: Mic,
+    title: "Account and profile",
+    icon: UserRound,
     copy:
-      "Saved audio replays stay on this device. When you submit a recording, the audio is sent securely to Vocali's transcription endpoint so it can prepare a transcript.",
+      "Vocali stores your email address, account identifier, display name, focus area, and daily goal so you can sign in and keep your profile consistent across devices. Apple may provide a private relay email when you choose Hide My Email.",
   },
   {
-    title: "Your practice history",
+    title: "Practice history",
     icon: Database,
     copy:
-      "Signed-in accounts store progress, transcripts, speaking metrics, and feedback in Supabase so history can sync across devices. Audio replay files are not synced to the cloud.",
+      "Your prompts, transcripts, speaking metrics, feedback, streak information, and completion dates are linked to your account and stored in Supabase so your progress can sync across signed-in devices.",
   },
   {
-    title: "Speaking metrics",
-    icon: Sparkles,
+    title: "Recordings and transcription",
+    icon: Mic,
     copy:
-      "When a transcript is available, Vocali uses it to calculate simple signals like word count, pace, filler words, repetition, and time used.",
+      "Saved replay recordings remain in this device’s browser storage and are not synced to your Vocali account. When you request transcription, the selected audio is sent through Vocali’s server to OpenAI’s audio transcription API. Vocali does not keep a server copy of the raw audio.",
   },
   {
-    title: "Payments and coaching",
-    icon: Sparkles,
+    title: "Service providers",
+    icon: Cloud,
     copy:
-      "Vocali does not use payments or subscriptions. Feedback is based on transcript-derived signals, not semantic judgement of answer quality.",
+      "Supabase provides authentication and synced data storage. OpenAI processes submitted audio to return a transcript. Vercel hosts the Vocali web application and server routes. These providers process data only as needed to operate Vocali under their service terms.",
+  },
+  {
+    title: "Retention and deletion",
+    icon: Clock3,
+    copy:
+      "Synced account data remains until you delete your Vocali account. Device recordings and local practice data remain until you clear them, reset the app, remove site data, or delete your account. Permanent account deletion is available in Settings and removes your account and associated synced data.",
   },
 ];
 
 export default function PrivacyPage() {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+
   return (
     <ScreenFrame>
       <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <VocaliLogo size="xs" variant="mark" />
             <p className="text-base font-black text-vocali-teal-deep">
@@ -42,19 +58,21 @@ export default function PrivacyPage() {
             </p>
           </div>
           <span className="rounded-full bg-vocali-teal/12 px-4 py-2 text-sm font-black text-vocali-teal">
-            Audio stays local
+            No advertising
           </span>
         </header>
 
         <div className="mt-6">
-          <p className="text-lg font-black text-vocali-teal">Privacy</p>
+          <p className="text-lg font-black text-vocali-teal">Privacy policy</p>
           <h1 className="mt-2 text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-vocali-teal-deep">
-            Your practice stays close to you.
+            How Vocali handles your data.
           </h1>
           <p className="mt-4 text-base font-bold leading-6 text-vocali-muted">
-            Your account can sync progress, transcripts, and metrics. Audio
-            replays stay on this device, and submitted audio is sent only when
-            you ask Vocali to transcribe an attempt.
+            This policy explains what Vocali stores, when audio leaves your
+            device, who processes it, and how to remove your information.
+          </p>
+          <p className="mt-3 text-sm font-bold text-vocali-muted">
+            Last updated: 18 July 2026
           </p>
         </div>
 
@@ -85,13 +103,46 @@ export default function PrivacyPage() {
           })}
         </div>
 
-        <Link
-          href="/profile"
-          className="mt-3 flex h-16 w-full items-center justify-center gap-3 rounded-[1.2rem] bg-vocali-orange px-5 text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
-        >
-          <ArrowLeft className="h-5 w-5" strokeWidth={3} />
-          Back to profile
-        </Link>
+        <section className="mt-3 rounded-[1.5rem] bg-vocali-teal-deep p-5 text-white">
+          <div className="flex items-start gap-4">
+            <Mail className="mt-1 h-6 w-6 shrink-0 text-vocali-orange" strokeWidth={3} />
+            <div>
+              <h2 className="text-lg font-black">Questions and requests</h2>
+              <p className="mt-2 text-sm font-semibold leading-5 text-white/75">
+                Use Settings to delete your account. For privacy questions or
+                help with a request, contact Vocali support.
+              </p>
+              {supportEmail ? (
+                <a
+                  href={`mailto:${supportEmail}`}
+                  className="mt-3 inline-flex text-sm font-black text-vocali-orange"
+                >
+                  {supportEmail}
+                </a>
+              ) : (
+                <p className="mt-3 text-sm font-black text-vocali-orange">
+                  Support email must be configured before public release.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/support"
+            className="flex h-14 items-center justify-center rounded-[1.1rem] bg-white text-base font-black text-vocali-teal shadow-vocali-card"
+          >
+            Support
+          </Link>
+          <Link
+            href="/profile"
+            className="flex h-14 items-center justify-center gap-2 rounded-[1.1rem] bg-vocali-orange text-base font-black text-white"
+          >
+            <ArrowLeft className="h-5 w-5" strokeWidth={3} />
+            Back to profile
+          </Link>
+        </div>
       </section>
     </ScreenFrame>
   );

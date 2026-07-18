@@ -17,6 +17,7 @@ import {
   signInWithGoogle,
   signUpWithEmail,
   isNativeAppleSignInAvailable,
+  requestPasswordReset,
   useAuth,
 } from "@/lib/authStore";
 import {
@@ -47,6 +48,7 @@ export function LoginForm({
   const [message, setMessage] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
   const isAppleSignInEnabled = useSyncExternalStore(
     subscribeToNativeAuthAvailability,
     isNativeAppleSignInAvailable,
@@ -136,6 +138,25 @@ export function LoginForm({
 
     setMessage("Signing you in...");
     router.replace(redirectPath);
+  }
+
+  async function handleForgotPassword() {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setMessage("Enter your email address first, then request a reset link.");
+      return;
+    }
+
+    setMessage(null);
+    setIsSendingPasswordReset(true);
+    const result = await requestPasswordReset(trimmedEmail);
+    setIsSendingPasswordReset(false);
+    setMessage(
+      result.ok
+        ? "If an account exists for that email, a password reset link is on its way."
+        : result.error,
+    );
   }
 
   const activeOAuthProvider = auth.errorMessage ? null : oauthProvider;
@@ -276,6 +297,19 @@ export function LoginForm({
                   value={password}
                 />
 
+                {!isSignup ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleForgotPassword()}
+                    disabled={isSendingPasswordReset || isSubmitting}
+                    className="-mt-1 block w-full text-right text-sm font-bold text-vocali-teal disabled:opacity-60"
+                  >
+                    {isSendingPasswordReset
+                      ? "Sending reset link..."
+                      : "Forgot password?"}
+                  </button>
+                ) : null}
+
                 {isSignup ? (
                   <PasswordField
                     autoComplete="new-password"
@@ -298,7 +332,10 @@ export function LoginForm({
                 <button
                   type="submit"
                   disabled={
-                    isSubmitting || Boolean(activeOAuthProvider) || !auth.isReady
+                    isSubmitting ||
+                    isSendingPasswordReset ||
+                    Boolean(activeOAuthProvider) ||
+                    !auth.isReady
                   }
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-[1rem] bg-vocali-orange px-5 text-base font-extrabold text-white shadow-[0_14px_24px_rgb(255_122_26/0.22)] disabled:opacity-70"
                 >
@@ -459,7 +496,7 @@ function PasswordField({
           onChange={(event) => onValueChange(event.target.value)}
           className="h-full min-w-0 flex-1 bg-transparent px-4 text-base font-semibold text-vocali-teal-deep outline-none"
           autoComplete={autoComplete}
-          minLength={6}
+          minLength={8}
           required
         />
         <button
