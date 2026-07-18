@@ -9,6 +9,13 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const quotaTimestampFixMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "supabase/migrations/202607190001_fix_transcription_quota_timestamp.sql",
+  ),
+  "utf8",
+);
 
 describe("release security migration", () => {
   it("enforces ownership policies for user-controlled data", () => {
@@ -37,5 +44,16 @@ describe("release security migration", () => {
     expect(migration).toContain(
       "grant execute on function public.reserve_transcription_request",
     );
+  });
+
+  it("uses unambiguous timestamp variables in quota SQL", () => {
+    expect(quotaTimestampFixMigration).toContain(
+      "request_timestamp timestamptz := clock_timestamp()",
+    );
+    expect(quotaTimestampFixMigration).toContain(
+      "requested_at < request_timestamp - interval '31 days'",
+    );
+    expect(quotaTimestampFixMigration).not.toMatch(/\bcurrent_time\b/i);
+    expect(quotaTimestampFixMigration).toContain("from public, anon");
   });
 });
