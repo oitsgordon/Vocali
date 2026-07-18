@@ -1,6 +1,10 @@
 export const runtime = "nodejs";
 
-const maxAudioSizeBytes = 25 * 1024 * 1024;
+import { authenticateSupabaseRequest } from "@/lib/supabaseServer";
+
+const maxAudioSizeBytes = 10 * 1024 * 1024;
+const minuteTranscriptionLimit = 5;
+const dailyTranscriptionLimit = 20;
 const defaultTranscriptionModel = "gpt-4o-mini-transcribe";
 const supportedAudioTypes = new Set([
   "audio/mp3",
@@ -17,6 +21,12 @@ const supportedAudioTypes = new Set([
 type TranscriptionResponse = {
   transcript: string;
   transcriptStatus: "ready" | "failed";
+  errorCode?:
+    | "invalid_audio"
+    | "not_authenticated"
+    | "provider_unavailable"
+    | "quota_exceeded"
+    | "service_unavailable";
   error?: string;
 };
 
@@ -86,49 +96,27 @@ async function parseOpenAiError(response: Response): Promise<ParsedOpenAiError> 
   }
 }
 
-function getTranscriptionErrorMessage({
-  status,
-  data,
-  rawMessage,
-}: ParsedOpenAiError & { status: number }) {
-  const apiMessage =
-    typeof data.error?.message === "string" ? data.error.message : "";
-  const code = typeof data.error?.code === "string" ? data.error.code : "";
-  const message = apiMessage || rawMessage;
-  const lowerMessage = message.toLowerCase();
-
-  if (status === 401) {
-    return "The OpenAI API key was rejected. Check your .env.local key and restart the dev server.";
-  }
-
-  if (status === 403) {
-    return "The OpenAI API key does not have access to this transcription model yet.";
-  }
-
-  if (status === 429) {
-    return "OpenAI rate limits or billing limits blocked this transcription. Try again shortly.";
-  }
-
-  if (
-    code.includes("model") ||
-    lowerMessage.includes("model") ||
-    lowerMessage.includes("does not exist")
-  ) {
-    return `The selected transcription model was not available for this API key. OpenAI said: ${message}`;
-  }
-
-  if (lowerMessage.includes("format")) {
-    return `OpenAI could not read the recording format. OpenAI said: ${message}`;
-  }
-
-  if (message) {
-    return `OpenAI transcription failed: ${message}`;
-  }
-
-  return "Transcription could not be completed.";
-}
-
 export async function POST(request: Request) {
+  const authResult = await authenticateSupabaseRequest(request);
+
+  if (!authResult.ok) {
+    const isUnavailable = authResult.status === 503;
+
+    return jsonResponse(
+      {
+        transcript: "",
+        transcriptStatus: "failed",
+        errorCode: isUnavailable
+          ? "service_unavailable"
+          : "not_authenticated",
+        error: isUnavailable
+          ? "Account services are temporarily unavailable."
+          : "Please sign in again before transcribing.",
+      },
+      authResult.status,
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -136,6 +124,7 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
+        errorCode: "service_unavailable",
         error: "Transcription is not configured yet.",
       },
       503,
@@ -153,6 +142,7 @@ export async function POST(request: Request) {
         {
           transcript: "",
           transcriptStatus: "failed",
+          errorCode: "invalid_audio",
           error: "No audio recording was provided.",
         },
         400,
@@ -165,6 +155,7 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
+        errorCode: "invalid_audio",
         error: "The recording could not be read.",
       },
       400,
@@ -176,6 +167,7 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
+        errorCode: "invalid_audio",
         error: "The recording is too large or empty.",
       },
       400,
@@ -189,9 +181,62 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
+        errorCode: "invalid_audio",
         error: "This audio format is not supported for transcription yet.",
       },
       400,
+    );
+  }
+
+  const { data: quotaRows, error: quotaError } = await authResult.auth.client.rpc(
+    "reserve_transcription_request",
+    {
+      daily_limit: dailyTranscriptionLimit,
+      minute_limit: minuteTranscriptionLimit,
+    },
+  );
+  const quota = Array.isArray(quotaRows) ? quotaRows[0] : quotaRows;
+
+  if (quotaError || !quota || typeof quota.allowed !== "boolean") {
+    console.error("Transcription quota check failed", {
+      error: quotaError?.message ?? "Invalid quota response",
+      userId: authResult.auth.user.id,
+    });
+
+    return jsonResponse(
+      {
+        transcript: "",
+        transcriptStatus: "failed",
+        errorCode: "service_unavailable",
+        error: "Transcription is temporarily unavailable.",
+      },
+      503,
+    );
+  }
+
+  if (!quota.allowed) {
+    const retryAfter =
+      typeof quota.retry_after_seconds === "number"
+        ? Math.max(1, Math.ceil(quota.retry_after_seconds))
+        : 60;
+
+    return new Response(
+      JSON.stringify({
+        transcript: "",
+        transcriptStatus: "failed",
+        errorCode: "quota_exceeded",
+        error:
+          quota.limit_reason === "daily"
+            ? "You have reached today’s transcription limit. Try again tomorrow."
+            : "You are transcribing too quickly. Try again shortly.",
+      } satisfies TranscriptionResponse),
+      {
+        status: 429,
+        headers: {
+          "content-type": "application/json",
+          "retry-after": String(retryAfter),
+        },
+      },
     );
   }
 
@@ -234,12 +279,10 @@ export async function POST(request: Request) {
         {
           transcript: "",
           transcriptStatus: "failed",
-          error: getTranscriptionErrorMessage({
-            status: response.status,
-            ...parsedError,
-          }),
+          errorCode: "provider_unavailable",
+          error: "Transcription is temporarily unavailable. You can still continue with basic feedback.",
         },
-        response.status >= 500 ? 502 : 400,
+        502,
       );
     }
 
@@ -251,6 +294,7 @@ export async function POST(request: Request) {
         {
           transcript: "",
           transcriptStatus: "failed",
+          errorCode: "provider_unavailable",
           error: "No transcript was returned.",
         },
         502,
@@ -273,6 +317,7 @@ export async function POST(request: Request) {
       {
         transcript: "",
         transcriptStatus: "failed",
+        errorCode: "provider_unavailable",
         error: "Transcription failed. You can still continue with basic feedback.",
       },
       502,

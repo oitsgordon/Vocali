@@ -245,6 +245,17 @@ export async function signInWithApple() {
       return { ok: false, error: "Apple sign-in could not finish." };
     }
 
+    const authorizationCode = getStringValue(
+      appleLoginResult.result.authorizationCode,
+    );
+
+    if (authorizationCode && data.session?.access_token) {
+      await saveAppleAuthorizationForDeletion(
+        authorizationCode,
+        data.session.access_token,
+      );
+    }
+
     await saveAppleNameIfAvailable(user, appleLoginResult.result.profile);
     updateSnapshot({ errorMessage: null, isReady: true, user });
     setSupabaseSyncUserId(user.id);
@@ -505,6 +516,32 @@ function getAppleIdentityToken(result: AppleProviderResponse) {
 
 function getStringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+async function saveAppleAuthorizationForDeletion(
+  authorizationCode: string,
+  accessToken: string,
+) {
+  try {
+    const response = await fetch("/api/auth/apple/exchange", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ authorizationCode }),
+    });
+
+    if (!response.ok) {
+      console.error("[Vocali Apple Sign-In] token storage failed", {
+        status: response.status,
+      });
+    }
+  } catch (error) {
+    console.error("[Vocali Apple Sign-In] token storage request failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 function isAppleSignInCancelled(error: unknown) {

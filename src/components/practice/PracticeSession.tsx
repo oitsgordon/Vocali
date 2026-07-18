@@ -37,6 +37,7 @@ import {
 } from "@/lib/speakingBreakdownText";
 import { calculateSpeakingMetrics } from "@/lib/speakingMetrics";
 import { queueStreakCelebration } from "@/lib/streakCelebration";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import type {
   Challenge,
   FeedbackSignal,
@@ -1002,6 +1003,20 @@ export function PracticeSession({
 }
 
 async function requestTranscription(audioBlob: Blob) {
+  const supabase = getSupabaseClient();
+  const { data: sessionData } = supabase
+    ? await supabase.auth.getSession()
+    : { data: { session: null } };
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+    return {
+      transcript: "",
+      transcriptStatus: "failed" as const,
+      error: "Please sign in again before transcribing.",
+    };
+  }
+
   const formData = new FormData();
   const recordingType = audioBlob.type || "audio/webm";
   const extension = recordingType.includes("mp4")
@@ -1020,6 +1035,7 @@ async function requestTranscription(audioBlob: Blob) {
   try {
     const response = await fetch("/api/transcribe", {
       method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
       body: formData,
     });
     const data = (await response.json()) as {
