@@ -30,6 +30,10 @@ type AuthResult = {
   ok: boolean;
 };
 
+export type DeleteAccountResult = AuthResult & {
+  manualAppleRevocationRequired: boolean;
+};
+
 const OAUTH_REDIRECT_STORAGE_KEY = "vocali:oauth-redirect";
 const listeners = new Set<() => void>();
 let hasInitialized = false;
@@ -170,6 +174,106 @@ export async function signInWithEmail({
   });
 
   return error ? { ok: false, error: error.message } : { ok: true, error: null };
+}
+
+export async function requestPasswordReset(email: string): Promise<AuthResult> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return {
+      ok: false,
+      error: "Account sync is not configured on this build.",
+    };
+  }
+
+  if (typeof window === "undefined") {
+    return { ok: false, error: "Password recovery needs a browser window." };
+  }
+
+  const redirectUrl = new URL("/auth/callback", window.location.origin);
+  redirectUrl.searchParams.set("redirect", "/reset-password");
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: redirectUrl.toString(),
+  });
+
+  return error ? { ok: false, error: error.message } : { ok: true, error: null };
+}
+
+export async function updatePassword(password: string): Promise<AuthResult> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return {
+      ok: false,
+      error: "Account sync is not configured on this build.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  return error ? { ok: false, error: error.message } : { ok: true, error: null };
+}
+
+export async function deleteAccount(): Promise<DeleteAccountResult> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return {
+      ok: false,
+      error: "Account services are not configured on this build.",
+      manualAppleRevocationRequired: false,
+    };
+  }
+
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+
+  if (sessionError || !accessToken) {
+    return {
+      ok: false,
+      error: "Please sign in again before deleting your account.",
+      manualAppleRevocationRequired: false,
+    };
+  }
+
+  try {
+    const response = await fetch("/api/account", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ confirmation: "DELETE" }),
+    });
+    const responseBody = (await response.json().catch(() => ({}))) as {
+      error?: unknown;
+      manualAppleRevocationRequired?: unknown;
+    };
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          typeof responseBody.error === "string"
+            ? responseBody.error
+            : "Your account could not be deleted. Please try again.",
+        manualAppleRevocationRequired: false,
+      };
+    }
+
+    return {
+      ok: true,
+      error: null,
+      manualAppleRevocationRequired:
+        responseBody.manualAppleRevocationRequired === true,
+    };
+  } catch {
+    return {
+      ok: false,
+      error: "Your account could not be deleted. Please try again.",
+      manualAppleRevocationRequired: false,
+    };
+  }
 }
 
 export async function signInWithGoogle(redirectPath = "/home") {
