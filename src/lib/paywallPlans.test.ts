@@ -49,9 +49,10 @@ describe("paywall presentation", () => {
     expect(screen).toContain('const benefits = ["Daily prompts", "Transcript review", "Streak tracking"]');
     expect(screen).toContain('href="/privacy"');
     expect(screen).toContain("itunes/dev/stdeula");
-    expect(screen).toContain("mt-auto pb-3 pt-3 text-center");
-    expect(screen).toContain("mb-auto mt-3 pb-3");
-    expect(screen).toContain("min-[351px]:whitespace-nowrap");
+    expect(screen).toContain("bg-vocali-teal sm:min-h-[860px]");
+    expect(screen).toContain("rounded-t-[2rem] bg-vocali-cream");
+    expect(screen).toContain("grid grid-cols-2 gap-2.5");
+    expect(screen).toContain("mt-auto pt-3");
     expect(screen).toContain("Purchases are not connected on this preview screen.");
   });
 });
