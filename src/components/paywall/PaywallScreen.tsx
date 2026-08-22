@@ -38,7 +38,7 @@ export function PaywallScreen() {
           </button>
         </header>
 
-        <div className="pb-3 pt-3 text-center min-[351px]:pt-4">
+        <div className="mt-auto pb-3 pt-3 text-center min-[351px]:pt-4">
           <h1 className="text-[1.65rem] font-black leading-[1.08] tracking-[-0.04em] text-vocali-teal-deep min-[351px]:text-[1.85rem]">
             Keep your streak going
           </h1>
@@ -48,13 +48,13 @@ export function PaywallScreen() {
         </div>
 
         <ul
-          className="mb-3 grid gap-1 text-[0.7rem] font-bold leading-4 text-vocali-teal-deep min-[351px]:mb-4 min-[351px]:grid-cols-3 min-[351px]:gap-2"
+          className="mb-3 grid gap-1 text-[0.7rem] font-bold leading-4 text-vocali-teal-deep min-[351px]:mb-4 min-[351px]:flex min-[351px]:items-center min-[351px]:justify-between min-[351px]:gap-2 min-[351px]:text-[0.68rem]"
           aria-label="Subscription benefits"
         >
           {benefits.map((benefit) => (
             <li
               key={benefit}
-              className="flex items-center gap-1.5 min-[351px]:justify-center"
+              className="flex items-center gap-1.5 min-[351px]:justify-center min-[351px]:whitespace-nowrap"
             >
               <Check
                 className="h-3.5 w-3.5 shrink-0 text-vocali-teal"
@@ -122,7 +122,7 @@ export function PaywallScreen() {
           })}
         </div>
 
-        <div className="mt-3 min-[351px]:mt-3.5">
+        <div className="mb-auto mt-3 pb-3 min-[351px]:mt-3.5 min-[351px]:pb-4">
           <button
             type="button"
             disabled
