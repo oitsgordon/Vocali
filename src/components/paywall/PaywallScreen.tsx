@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { AudioLines, Check } from "lucide-react";
 import { type CSSProperties, useState } from "react";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import {
@@ -26,54 +26,60 @@ export function PaywallScreen() {
 
   return (
     <ScreenFrame>
-      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-vocali-teal sm:min-h-[860px]">
+      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-vocali-cream sm:min-h-[860px]">
         <div
-          className="pointer-events-none absolute -right-24 top-16 h-64 w-64 rounded-full border-[2.75rem] border-white/[0.055]"
+          className="pointer-events-none absolute -right-16 top-20 h-44 w-44 rounded-full bg-vocali-teal/[0.045]"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -left-14 top-[38%] h-28 w-28 rounded-full bg-vocali-orange/10"
+          className="pointer-events-none absolute -left-10 top-[34%] h-24 w-24 rounded-full border-[1.5rem] border-vocali-orange/[0.055]"
           aria-hidden="true"
         />
 
         <header className="vocali-safe-top vocali-safe-top-tight relative z-10 flex min-h-14 items-center justify-between gap-3 px-5 pb-1 [@media(max-height:600px)]:[--vocali-safe-top-base:1rem]">
-          <span className="text-xl font-black tracking-[-0.02em] text-white">
+          <span className="text-xl font-black tracking-[-0.02em] text-vocali-teal-deep">
             Vocali
           </span>
           <button
             type="button"
             disabled
             aria-describedby="paywall-preview-status"
-            className="min-h-11 px-0 text-xs font-black text-white/90 disabled:cursor-not-allowed"
+            className="min-h-11 px-0 text-xs font-black text-vocali-teal disabled:cursor-not-allowed"
           >
-            Restore purchases
+            Restore
           </button>
         </header>
 
-        <div className="relative z-10 flex flex-1 flex-col justify-center px-6 pb-[clamp(1.5rem,4dvh,3rem)] pt-[clamp(0.75rem,2dvh,1.5rem)] [@media(max-height:600px)]:pb-4">
-          <span
-            className="mb-4 h-1.5 w-12 rounded-full bg-vocali-orange"
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-[clamp(1rem,3dvh,2rem)] pt-1 text-center [@media(max-height:600px)]:pb-3">
+          <div
+            className="relative mb-4 flex h-[4.5rem] w-[5.25rem] items-center justify-center rounded-[1.6rem] rounded-bl-[0.55rem] bg-vocali-teal/12 text-vocali-teal shadow-[0_14px_32px_rgb(0_167_165/0.12)] [@media(max-height:600px)]:mb-2.5 [@media(max-height:600px)]:h-12 [@media(max-height:600px)]:w-14 [@media(max-height:600px)]:rounded-[1.15rem] [@media(max-height:600px)]:rounded-bl-md"
             aria-hidden="true"
-          />
-          <h1 className="max-w-[20rem] text-[clamp(2rem,5.2dvh,2.65rem)] font-black leading-[1.02] tracking-[-0.045em] text-white">
+          >
+            <AudioLines
+              className="h-9 w-9 [@media(max-height:600px)]:h-7 [@media(max-height:600px)]:w-7"
+              strokeWidth={2.75}
+            />
+            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full border-[3px] border-vocali-cream bg-vocali-orange" />
+          </div>
+          <h1 className="max-w-[20rem] text-[clamp(1.8rem,4.7dvh,2.5rem)] font-black leading-[1.03] tracking-[-0.045em] text-vocali-teal-deep">
             Keep your streak going
           </h1>
-          <p className="mt-3 max-w-[19rem] text-sm font-bold leading-5 text-white/80">
-            Unlock daily practice, transcripts, and progress.
+          <p className="mt-2.5 max-w-[19rem] text-sm font-bold leading-5 text-vocali-muted [@media(max-height:600px)]:mt-1.5 [@media(max-height:600px)]:text-xs">
+            Unlock daily prompts, transcripts, and streaks.
           </p>
         </div>
 
         <div
-          className="vocali-safe-bottom relative z-10 flex min-h-[clamp(21rem,48dvh,25rem)] shrink-0 flex-col rounded-t-[2rem] bg-vocali-cream px-4 pt-[clamp(1rem,3dvh,1.75rem)] shadow-[0_-18px_40px_rgb(7_50_71/0.12)] min-[351px]:px-5 [@media(max-height:600px)]:min-h-[18rem] [@media(max-height:600px)]:pt-3"
+          className="vocali-safe-bottom relative z-10 flex min-h-[clamp(22.5rem,46dvh,24.5rem)] shrink-0 flex-col rounded-t-[2.1rem] bg-white px-4 pt-[clamp(1rem,2.5dvh,1.5rem)] shadow-[0_-18px_45px_rgb(7_50_71/0.11)] min-[351px]:px-5 [@media(max-height:600px)]:min-h-[19.25rem] [@media(max-height:600px)]:pt-3"
           style={paywallSafeBottomStyle}
         >
           <ul
-            className="grid gap-1.5 text-xs font-black leading-5 text-vocali-teal-deep"
+            className="grid gap-1 text-xs font-black leading-5 text-vocali-teal-deep"
             aria-label="Subscription benefits"
           >
             {benefits.map((benefit) => (
               <li key={benefit} className="flex items-center gap-2">
-                <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-vocali-teal text-white">
+                <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-vocali-teal/12 text-vocali-teal">
                   <Check
                     className="h-3 w-3"
                     strokeWidth={4}
@@ -86,7 +92,7 @@ export function PaywallScreen() {
           </ul>
 
           <div
-            className="mt-3 grid grid-cols-2 gap-2.5"
+            className="mt-3 grid grid-cols-2 gap-2.5 [@media(max-height:600px)]:mt-2"
             aria-label="Choose a subscription"
           >
             {PAYWALL_PLANS.map((plan) => {
@@ -98,10 +104,10 @@ export function PaywallScreen() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedPlanId(plan.id)}
-                  className={`relative flex min-h-[6.35rem] min-w-0 flex-col rounded-[1rem] border p-3 text-left transition [@media(max-height:600px)]:min-h-[5.5rem] [@media(max-height:600px)]:py-2 ${
+                  className={`relative flex min-h-[6.25rem] min-w-0 flex-col rounded-[1rem] border p-3 text-left transition [@media(max-height:600px)]:min-h-[5.35rem] [@media(max-height:600px)]:py-2 ${
                     isSelected
-                      ? "border-vocali-teal bg-vocali-teal/[0.065] shadow-[0_8px_20px_rgb(0_167_165/0.1)]"
-                      : "border-vocali-border bg-white/75"
+                      ? "border-vocali-teal/65 bg-vocali-teal/[0.07] shadow-[0_8px_20px_rgb(0_167_165/0.08)]"
+                      : "border-transparent bg-vocali-cream/75"
                   }`}
                 >
                   <span
@@ -139,7 +145,7 @@ export function PaywallScreen() {
             })}
           </div>
 
-          <div className="mt-auto pt-3">
+          <div className="mt-auto pt-3 [@media(max-height:600px)]:pt-2">
             <button
               type="button"
               disabled
