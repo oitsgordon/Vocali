@@ -22,7 +22,7 @@ describe("Supabase security cleanup migration", () => {
   it("normalizes ownership policies around cached authenticated identity", () => {
     expect(migration).toContain("policyname ilike '%own%'");
     expect(migration.match(/create policy /g)).toHaveLength(8);
-    expect(migration.match(/to authenticated\n/g)).toHaveLength(8);
+    expect(migration.match(/to authenticated\r?\n/g)).toHaveLength(8);
     expect(migration).toContain("using ((select auth.uid()) = id)");
     expect(migration).toContain("with check ((select auth.uid()) = id)");
     expect(migration).toContain("using ((select auth.uid()) = user_id)");
