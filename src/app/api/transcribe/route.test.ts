@@ -108,7 +108,8 @@ describe("POST /api/transcribe", () => {
   });
 
   it("returns a transcript for an authenticated request within quota", async () => {
-    authenticateSupabaseRequest.mockResolvedValue(createAuthenticatedResult());
+    const auth = createAuthenticatedResult();
+    authenticateSupabaseRequest.mockResolvedValue(auth);
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -119,6 +120,13 @@ describe("POST /api/transcribe", () => {
     const response = await POST(createAudioRequest());
 
     expect(response.status).toBe(200);
+    expect(auth.auth.client.rpc).toHaveBeenCalledWith(
+      "reserve_transcription_request",
+      {
+        daily_limit: 20,
+        minute_limit: 5,
+      },
+    );
     await expect(response.json()).resolves.toEqual({
       transcript: "A clear practice response.",
       transcriptStatus: "ready",
