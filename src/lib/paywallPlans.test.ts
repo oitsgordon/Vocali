@@ -50,11 +50,12 @@ describe("paywall presentation", () => {
     expect(screen).toContain('href="/privacy"');
     expect(screen).toContain("itunes/dev/stdeula");
     expect(screen).toContain("bg-vocali-cream sm:min-h-[860px]");
-    expect(screen).toContain("rounded-t-[2.1rem] bg-white");
+    expect(screen).toContain("rounded-t-[2rem]");
+    expect(screen).toContain("divide-y divide-vocali-teal-deep/[0.065]");
     expect(screen).toContain("AudioLines");
     expect(screen).toContain("Restore");
-    expect(screen).toContain("grid grid-cols-2 gap-2.5");
-    expect(screen).toContain("mt-auto pt-3");
+    expect(screen).toContain("grid grid-cols-2 gap-3");
+    expect(screen).toContain("mt-auto pt-5");
     expect(screen).toContain("Purchases are not connected on this preview screen.");
   });
 });
