@@ -127,7 +127,7 @@ workflows:
             --include-version || true
       - name: Install npm dependencies
         script: |
-          npm ci
+          npm ci --no-audit --no-fund
       - name: Verify web app
         script: |
           npm run check
