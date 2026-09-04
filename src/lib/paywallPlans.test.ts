@@ -56,6 +56,8 @@ describe("paywall presentation", () => {
     expect(screen).toContain("Restore");
     expect(screen).toContain("grid grid-cols-2 gap-3");
     expect(screen).toContain("mt-auto pt-5");
-    expect(screen).toContain("Purchases are not connected on this preview screen.");
+    expect(screen).toContain("purchaseRevenueCatPlan");
+    expect(screen).toContain("restoreRevenueCatPurchases");
+    expect(screen).toContain('id="paywall-status"');
   });
 });
