@@ -20,6 +20,15 @@ describe("App Store compliance UI", () => {
     expect(resetPassword).toContain("updatePassword");
   });
 
+  it("keeps native Apple sign-in interactive and exposes the paywall preview", () => {
+    const login = readRepositoryFile("src/app/login/LoginForm.tsx");
+
+    expect(login).toContain("Continue with Apple");
+    expect(login).toContain("disabled={isOAuthSignInBusy}");
+    expect(login).toContain('href="/paywall"');
+    expect(login).toContain("View subscription plans");
+  });
+
   it("requires the exact destructive account deletion confirmation", () => {
     const settings = readRepositoryFile("src/app/settings/page.tsx");
     const accountRoute = readRepositoryFile("src/app/api/account/route.ts");

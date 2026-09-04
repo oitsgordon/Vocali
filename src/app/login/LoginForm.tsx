@@ -160,6 +160,7 @@ export function LoginForm({
   }
 
   const activeOAuthProvider = auth.errorMessage ? null : oauthProvider;
+  const isOAuthSignInBusy = isSubmitting || Boolean(activeOAuthProvider);
   const shouldShowSocialAuth =
     isAppleSignInEnabled || isGoogleSignInEnabled;
 
@@ -216,11 +217,7 @@ export function LoginForm({
                   <div className="space-y-2.5">
                     {isAppleSignInEnabled ? (
                       <OAuthButton
-                        disabled={
-                          isSubmitting ||
-                          Boolean(activeOAuthProvider) ||
-                          !auth.isReady
-                        }
+                        disabled={isOAuthSignInBusy}
                         isLoading={activeOAuthProvider === "apple"}
                         onClick={() => void handleOAuthSignIn("apple")}
                         variant="apple"
@@ -230,11 +227,7 @@ export function LoginForm({
                     ) : null}
                     {isGoogleSignInEnabled ? (
                       <OAuthButton
-                        disabled={
-                          isSubmitting ||
-                          Boolean(activeOAuthProvider) ||
-                          !auth.isReady
-                        }
+                        disabled={isOAuthSignInBusy}
                         isLoading={activeOAuthProvider === "google"}
                         onClick={() => void handleOAuthSignIn("google")}
                         variant="google"
@@ -372,6 +365,12 @@ export function LoginForm({
           className="mt-2 flex h-8 w-full items-center justify-center rounded-[1rem] text-sm font-bold text-vocali-teal"
         >
           Back to welcome
+        </Link>
+        <Link
+          href="/paywall"
+          className="flex h-8 w-full items-center justify-center rounded-[1rem] text-sm font-bold text-vocali-muted underline decoration-vocali-border decoration-2 underline-offset-4"
+        >
+          View subscription plans
         </Link>
       </section>
     </ScreenFrame>
