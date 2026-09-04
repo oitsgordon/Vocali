@@ -22,6 +22,8 @@
     "@capacitor/core": "^8.3.4",
     "@capacitor/ios": "^8.3.4",
     "@capgo/capacitor-social-login": "^8.3.35",
+    "@revenuecat/purchases-capacitor": "^13.5.0",
+    "@revenuecat/purchases-capacitor-ui": "^13.5.0",
     "@supabase/supabase-js": "^2.108.2",
     "clsx": "^2.1.1",
     "jose": "^6.2.3",
@@ -43,6 +45,7 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
+    "@xmldom/xmldom": "0.9.12",
     "postcss": "8.5.23",
     "sharp": "0.35.0"
   }

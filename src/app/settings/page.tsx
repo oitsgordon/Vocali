@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
+  CreditCard,
+  Crown,
   HardDrive,
   History,
   KeyRound,
@@ -24,6 +26,13 @@ import { deleteAccount, signOut, useAuth } from "@/lib/authStore";
 import { clearAllLocalVocaliData } from "@/lib/localDataCleanup";
 import { clearAttempts } from "@/lib/attemptStorage";
 import { clearRecordings } from "@/lib/recordingStorage";
+import {
+  presentRevenueCatCustomerCenter,
+  presentRevenueCatPaywall,
+  restoreRevenueCatPurchases,
+  useRevenueCat,
+} from "@/lib/revenueCat";
+import { hasVocaliProEntitlement } from "@/lib/revenueCatConfig";
 import { useUserPreferences } from "@/lib/useUserPreferences";
 import {
   dailyGoalOptions,
@@ -68,11 +77,13 @@ function SettingsContent({
   savePreferences: (preferences: UserPreferences) => boolean;
 }) {
   const auth = useAuth();
+  const revenueCat = useRevenueCat();
   const [message, setMessage] = useState<LocalDataMessage | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [savePreferenceStatus, setSavePreferenceStatus] =
     useState<SavePreferenceStatus>("idle");
   const [preferences, setPreferences] = useState<UserPreferences>(
@@ -219,6 +230,41 @@ function SettingsContent({
     window.location.replace("/");
   }
 
+  async function handleSubscriptionAction(
+    action: "manage" | "plans" | "restore",
+  ) {
+    if (isManagingSubscription) {
+      return;
+    }
+
+    setIsManagingSubscription(true);
+    setMessage(null);
+    const result =
+      action === "manage"
+        ? await presentRevenueCatCustomerCenter()
+        : action === "plans"
+          ? await presentRevenueCatPaywall()
+          : await restoreRevenueCatPurchases();
+    setIsManagingSubscription(false);
+
+    if (result.ok) {
+      setMessage({
+        tone: "success",
+        text:
+          action === "restore"
+            ? "Your Vocali Pro subscription has been restored."
+            : hasVocaliProEntitlement(result.customerInfo)
+              ? "Your Vocali Pro subscription is active."
+              : "Your subscription status is up to date.",
+      });
+      return;
+    }
+
+    if (!result.cancelled) {
+      setMessage({ tone: "warning", text: result.error });
+    }
+  }
+
   return (
     <AuthGate>
       <ScreenFrame>
@@ -328,6 +374,52 @@ function SettingsContent({
               </p>
             ) : null}
           </div>
+        </section>
+
+        <section className="mt-6 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-vocali-teal/12 text-vocali-teal">
+              <Crown className="h-6 w-6" strokeWidth={2.75} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-vocali-teal-deep">
+                Subscription
+              </h2>
+              <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
+                {revenueCat.status === "loading" || revenueCat.status === "idle"
+                  ? "Checking your subscription..."
+                  : revenueCat.isPro
+                    ? "Vocali Pro is active"
+                    : "Free plan"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <SettingsAction
+              disabled={isManagingSubscription}
+              icon={CreditCard}
+              label={
+                revenueCat.isPro
+                  ? "Manage subscription"
+                  : "View subscription options"
+              }
+              onClick={() =>
+                handleSubscriptionAction(revenueCat.isPro ? "manage" : "plans")
+              }
+            />
+            <SettingsAction
+              disabled={isManagingSubscription}
+              icon={RotateCcw}
+              label="Restore purchases"
+              onClick={() => handleSubscriptionAction("restore")}
+            />
+          </div>
+          {revenueCat.status === "unavailable" ? (
+            <p className="mt-3 text-xs font-bold leading-4 text-vocali-muted">
+              Subscription controls are available in the Vocali iPhone app.
+            </p>
+          ) : null}
         </section>
 
         <section className="mt-6 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">

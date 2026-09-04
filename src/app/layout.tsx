@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { RevenueCatProvider } from "@/components/subscriptions/RevenueCatProvider";
 import "./globals.css";
 
 const nunitoSans = Nunito_Sans({
@@ -52,7 +53,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunitoSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <RevenueCatProvider>{children}</RevenueCatProvider>
+        </AuthProvider>
       </body>
     </html>
   );

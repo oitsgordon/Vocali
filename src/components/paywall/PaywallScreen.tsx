@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { AudioLines, Check } from "lucide-react";
-import { type CSSProperties, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import {
   DEFAULT_PAYWALL_PLAN_ID,
@@ -12,6 +12,13 @@ import {
   PAYWALL_PLANS,
   type PaywallPlanId,
 } from "@/lib/paywallPlans";
+import {
+  getRevenueCatPackage,
+  purchaseRevenueCatPlan,
+  restoreRevenueCatPurchases,
+  trackVocaliPaywallImpression,
+  useRevenueCat,
+} from "@/lib/revenueCat";
 
 const benefits = ["Daily prompts", "Transcript review", "Streak tracking"];
 const paywallSafeBottomStyle = {
@@ -19,10 +26,51 @@ const paywallSafeBottomStyle = {
 } as CSSProperties;
 
 export function PaywallScreen() {
+  const revenueCat = useRevenueCat();
   const [selectedPlanId, setSelectedPlanId] = useState<PaywallPlanId>(
     DEFAULT_PAYWALL_PLAN_ID,
   );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const selectedPlan = getPaywallPlan(selectedPlanId);
+
+  useEffect(() => {
+    if (revenueCat.status === "ready") {
+      void trackVocaliPaywallImpression();
+    }
+  }, [revenueCat.status]);
+
+  async function handlePurchase() {
+    if (isProcessing || revenueCat.isPro) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setPurchaseMessage(null);
+    const result = await purchaseRevenueCatPlan(selectedPlanId);
+    setIsProcessing(false);
+    setPurchaseMessage(
+      result.ok
+        ? "Vocali Pro is active. Your subscription is ready."
+        : result.error,
+    );
+  }
+
+  async function handleRestore() {
+    if (isProcessing) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setPurchaseMessage(null);
+    const result = await restoreRevenueCatPurchases();
+    setIsProcessing(false);
+    setPurchaseMessage(
+      result.ok
+        ? "Your Vocali Pro subscription has been restored."
+        : result.error,
+    );
+  }
 
   return (
     <ScreenFrame>
@@ -33,11 +81,12 @@ export function PaywallScreen() {
           </span>
           <button
             type="button"
-            disabled
-            aria-describedby="paywall-preview-status"
-            className="min-h-11 px-0 text-xs font-black text-vocali-teal disabled:cursor-not-allowed"
+            disabled={isProcessing}
+            onClick={() => void handleRestore()}
+            aria-describedby="paywall-status"
+            className="min-h-11 px-0 text-xs font-black text-vocali-teal disabled:cursor-not-allowed disabled:opacity-55"
           >
-            Restore
+            {isProcessing ? "Working..." : "Restore"}
           </button>
         </header>
 
@@ -91,6 +140,12 @@ export function PaywallScreen() {
           >
             {PAYWALL_PLANS.map((plan) => {
               const isSelected = selectedPlanId === plan.id;
+              const revenueCatPackage = getRevenueCatPackage(
+                plan.id,
+                revenueCat.offering,
+              );
+              const displayPrice =
+                revenueCatPackage?.product.priceString ?? plan.price;
 
               return (
                 <button
@@ -126,7 +181,7 @@ export function PaywallScreen() {
                     <span className="h-[1.75rem] [@media(max-height:600px)]:h-[1.5rem]" aria-hidden="true" />
                   )}
                   <span className="mt-auto block whitespace-nowrap text-[1.05rem] font-black leading-5 text-vocali-teal-deep [@media(max-height:600px)]:text-[0.92rem]">
-                    {plan.price}
+                    {displayPrice}
                     <span className="text-[0.7rem] text-vocali-muted [@media(max-height:600px)]:text-[0.62rem]">
                       {` / ${plan.cadence}`}
                     </span>
@@ -142,17 +197,22 @@ export function PaywallScreen() {
           <div className="mt-auto pt-5 [@media(max-height:600px)]:pt-2.5">
             <button
               type="button"
-              disabled
-              aria-describedby="paywall-preview-status"
-              className="flex min-h-14 w-full items-center justify-center rounded-[1rem] bg-vocali-orange px-4 text-base font-black text-white shadow-[0_12px_24px_rgb(255_122_26/0.24)] disabled:cursor-not-allowed [@media(max-height:600px)]:min-h-12 [@media(max-height:600px)]:text-[0.92rem]"
+              disabled={isProcessing || revenueCat.isPro}
+              onClick={() => void handlePurchase()}
+              aria-describedby="paywall-status"
+              className="flex min-h-14 w-full items-center justify-center rounded-[1rem] bg-vocali-orange px-4 text-base font-black text-white shadow-[0_12px_24px_rgb(255_122_26/0.24)] disabled:cursor-not-allowed disabled:opacity-65 [@media(max-height:600px)]:min-h-12 [@media(max-height:600px)]:text-[0.92rem]"
             >
-              {getPaywallCta(selectedPlan)}
+              {isProcessing
+                ? "Connecting to App Store..."
+                : revenueCat.isPro
+                  ? "Vocali Pro is active"
+                  : getPaywallCta(selectedPlan)}
             </button>
             <p
               className="mx-auto mt-2.5 max-w-[19.5rem] text-center text-[0.68rem] font-bold leading-[1.45] text-vocali-muted [@media(max-height:600px)]:mt-1.5 [@media(max-height:600px)]:text-[0.62rem]"
               aria-live="polite"
             >
-              {getPaywallRenewalCopy(selectedPlan)}
+              {purchaseMessage ?? getPaywallRenewalCopy(selectedPlan)}
             </p>
             <nav
               className="mt-2.5 flex justify-center gap-6 text-xs font-black text-vocali-teal-deep [@media(max-height:600px)]:mt-1.5 [@media(max-height:600px)]:text-[0.68rem]"
@@ -176,8 +236,10 @@ export function PaywallScreen() {
           </div>
         </div>
 
-        <p id="paywall-preview-status" className="sr-only">
-          Purchases are not connected on this preview screen.
+        <p id="paywall-status" className="sr-only">
+          {revenueCat.status === "ready"
+            ? "App Store subscriptions are ready."
+            : "Subscription controls require the Vocali iPhone app and RevenueCat configuration."}
         </p>
       </section>
     </ScreenFrame>

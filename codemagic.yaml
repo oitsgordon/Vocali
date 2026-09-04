@@ -65,6 +65,40 @@ workflows:
             echo "The hosted support page does not contain a configured support email."
             exit 1
           }
+      - name: Verify RevenueCat production configuration
+        script: |
+          set -euo pipefail
+
+          RELEASE_READINESS_JSON="$(curl --fail --silent --show-error --location "${CAPACITOR_SERVER_URL%/}/api/release-readiness")"
+          export RELEASE_READINESS_JSON
+
+          python3 <<'PY'
+          import json
+          import os
+          import sys
+
+          readiness = json.loads(os.environ["RELEASE_READINESS_JSON"])
+          revenue_cat = readiness.get("revenueCat", {})
+
+          if not revenue_cat.get("configured"):
+              print("RevenueCat is not configured on the hosted production app.", file=sys.stderr)
+              sys.exit(1)
+
+          if not revenue_cat.get("productionKey"):
+              print("The hosted app is using a RevenueCat Test Store key. Add the iOS public SDK key before building for TestFlight.", file=sys.stderr)
+              sys.exit(1)
+
+          expected_products = {"yearly", "monthly"}
+          configured_products = set(revenue_cat.get("products", []))
+
+          if revenue_cat.get("entitlement") != "vocali_pro":
+              print("RevenueCat entitlement configuration is not vocali_pro.", file=sys.stderr)
+              sys.exit(1)
+
+          if configured_products != expected_products:
+              print("RevenueCat product identifiers are not yearly and monthly.", file=sys.stderr)
+              sys.exit(1)
+          PY
       - name: Verify App Store Connect app access
         script: |
           set -e
