@@ -25,7 +25,7 @@ describe("App Store compliance UI", () => {
 
     expect(login).toContain("Continue with Apple");
     expect(login).toContain("disabled={isOAuthSignInBusy}");
-    expect(login).toContain('href="/paywall"');
+    expect(login).toContain("loginPaywallHref");
     expect(login).toContain("View subscription plans");
   });
 

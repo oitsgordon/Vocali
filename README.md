@@ -135,7 +135,10 @@ Use a real iPhone when testing recording. The Simulator may not behave the same 
 
 - Supabase provides account authentication and cross-device profile/attempt sync when the public Supabase environment variables are configured.
 - Recordings remain in the device browser database; practice attempts are cached locally and synced to Supabase for signed-in users.
-- The app does not currently include payments, RevenueCat, service workers, or offline caching.
+- RevenueCat handles App Store purchases, restores, and the vocali_pro
+  entitlement. Vocali uses its own paywall and subscription-management screens;
+  RevenueCat-hosted paywalls and Customer Center are not presented.
+- The app does not currently include service workers or offline caching.
 - The wrapper currently depends on the hosted Vercel app being available.
 - If the Vercel URL changes, update `capacitor.config.ts` and run `npm run cap:sync:ios` again.
 
