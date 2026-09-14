@@ -58,6 +58,9 @@ describe("paywall presentation", () => {
     expect(screen).toContain("mt-auto pt-5");
     expect(screen).toContain("purchaseRevenueCatPlan");
     expect(screen).toContain("restoreRevenueCatPurchases");
-    expect(screen).toContain('id="paywall-status"');
+    expect(screen).toContain('aria-label="Back"');
+    expect(screen).toContain('role="status"');
+    expect(screen).toContain("planPresentation");
+    expect(screen).not.toContain("RevenueCatUI");
   });
 });

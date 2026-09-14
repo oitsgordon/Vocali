@@ -24,6 +24,7 @@ import {
   defaultUserPreferences,
   saveUserPreferences,
 } from "@/lib/userPreferences";
+import { loginPaywallHref } from "@/lib/subscriptionPresentation";
 
 type AuthMode = "login" | "signup";
 type OAuthProvider = "apple" | "google";
@@ -367,7 +368,7 @@ export function LoginForm({
           Back to welcome
         </Link>
         <Link
-          href="/paywall"
+          href={loginPaywallHref(mode, redirectPath)}
           className="flex h-8 w-full items-center justify-center rounded-[1rem] text-sm font-bold text-vocali-muted underline decoration-vocali-border decoration-2 underline-offset-4"
         >
           View subscription plans

@@ -22,17 +22,13 @@ import {
 import { useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
+import { SubscriptionControls } from "@/components/subscriptions/SubscriptionControls";
 import { deleteAccount, signOut, useAuth } from "@/lib/authStore";
 import { clearAllLocalVocaliData } from "@/lib/localDataCleanup";
 import { clearAttempts } from "@/lib/attemptStorage";
 import { clearRecordings } from "@/lib/recordingStorage";
-import {
-  presentRevenueCatCustomerCenter,
-  presentRevenueCatPaywall,
-  restoreRevenueCatPurchases,
-  useRevenueCat,
-} from "@/lib/revenueCat";
-import { hasVocaliProEntitlement } from "@/lib/revenueCatConfig";
+import { useRevenueCat } from "@/lib/revenueCat";
+import { subscriptionStatus } from "@/lib/subscriptionPresentation";
 import { useUserPreferences } from "@/lib/useUserPreferences";
 import {
   dailyGoalOptions,
@@ -83,7 +79,6 @@ function SettingsContent({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [savePreferenceStatus, setSavePreferenceStatus] =
     useState<SavePreferenceStatus>("idle");
   const [preferences, setPreferences] = useState<UserPreferences>(
@@ -230,41 +225,6 @@ function SettingsContent({
     window.location.replace("/");
   }
 
-  async function handleSubscriptionAction(
-    action: "manage" | "plans" | "restore",
-  ) {
-    if (isManagingSubscription) {
-      return;
-    }
-
-    setIsManagingSubscription(true);
-    setMessage(null);
-    const result =
-      action === "manage"
-        ? await presentRevenueCatCustomerCenter()
-        : action === "plans"
-          ? await presentRevenueCatPaywall()
-          : await restoreRevenueCatPurchases();
-    setIsManagingSubscription(false);
-
-    if (result.ok) {
-      setMessage({
-        tone: "success",
-        text:
-          action === "restore"
-            ? "Your Vocali Pro subscription has been restored."
-            : hasVocaliProEntitlement(result.customerInfo)
-              ? "Your Vocali Pro subscription is active."
-              : "Your subscription status is up to date.",
-      });
-      return;
-    }
-
-    if (!result.cancelled) {
-      setMessage({ tone: "warning", text: result.error });
-    }
-  }
-
   return (
     <AuthGate>
       <ScreenFrame>
@@ -386,40 +346,23 @@ function SettingsContent({
                 Subscription
               </h2>
               <p className="mt-1 text-sm font-bold leading-5 text-vocali-muted">
-                {revenueCat.status === "loading" || revenueCat.status === "idle"
-                  ? "Checking your subscription..."
-                  : revenueCat.isPro
-                    ? "Vocali Pro is active"
-                    : "Free plan"}
+                {subscriptionStatus(revenueCat)}
               </p>
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
-            <SettingsAction
-              disabled={isManagingSubscription}
+            <SettingsLink
+              href={revenueCat.isPro ? "/settings/subscription" : "/paywall?from=settings"}
               icon={CreditCard}
               label={
                 revenueCat.isPro
                   ? "Manage subscription"
                   : "View subscription options"
               }
-              onClick={() =>
-                handleSubscriptionAction(revenueCat.isPro ? "manage" : "plans")
-              }
             />
-            <SettingsAction
-              disabled={isManagingSubscription}
-              icon={RotateCcw}
-              label="Restore purchases"
-              onClick={() => handleSubscriptionAction("restore")}
-            />
+            <SubscriptionControls />
           </div>
-          {revenueCat.status === "unavailable" ? (
-            <p className="mt-3 text-xs font-bold leading-4 text-vocali-muted">
-              Subscription controls are available in the Vocali iPhone app.
-            </p>
-          ) : null}
         </section>
 
         <section className="mt-6 rounded-[1.75rem] bg-white p-5 shadow-vocali-card">

@@ -10,6 +10,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PaywallPage() {
-  return <PaywallScreen />;
+type PaywallPageProps = {
+  searchParams: Promise<{ from?: string | string[]; mode?: string | string[]; redirect?: string | string[] }>;
+};
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function PaywallPage({ searchParams }: PaywallPageProps) {
+  const params = await searchParams;
+  const source = first(params.from);
+  return <PaywallScreen entry={{
+    from: source === "settings" || source === "subscription" || source === "login" ? source : undefined,
+    mode: first(params.mode) === "signup" ? "signup" : "login",
+    redirect: first(params.redirect),
+  }} />;
 }
