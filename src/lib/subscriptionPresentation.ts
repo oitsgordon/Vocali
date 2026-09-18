@@ -3,7 +3,7 @@ import { getPaywallPlan, type PaywallPlanId } from "./paywallPlans";
 import type { RevenueCatSnapshot } from "./revenueCat";
 import { REVENUECAT_ENTITLEMENT_ID } from "./revenueCatConfig";
 
-export type PaywallEntry = { from?: string; mode?: string; redirect?: string };
+export type PaywallEntry = { from?: string; mode?: string; redirect?: string; plan?: string };
 export function safeInternalDestination(value?: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || /[\\\u0000-\u0020]/.test(value)) return "/home";
   try {

@@ -1,6 +1,5 @@
-import Link from "next/link";
+import { PublicPageLinks } from "@/components/shared/PublicPageLinks";
 import {
-  ArrowLeft,
   Clock3,
   Cloud,
   Database,
@@ -44,7 +43,8 @@ const privacySections = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ returnTo?: string | string[] }> }) {
+  const { returnTo } = await searchParams;
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
 
   return (
@@ -128,21 +128,7 @@ export default function PrivacyPage() {
           </div>
         </section>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Link
-            href="/support"
-            className="flex h-14 items-center justify-center rounded-[1.1rem] bg-white text-base font-black text-vocali-teal shadow-vocali-card"
-          >
-            Support
-          </Link>
-          <Link
-            href="/profile"
-            className="flex h-14 items-center justify-center gap-2 rounded-[1.1rem] bg-vocali-orange text-base font-black text-white"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={3} />
-            Back to profile
-          </Link>
-        </div>
+        <PublicPageLinks page="/privacy" returnTo={returnTo} />
       </section>
     </ScreenFrame>
   );

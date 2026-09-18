@@ -165,6 +165,17 @@ export function LoginForm({
   const shouldShowSocialAuth =
     isAppleSignInEnabled || isGoogleSignInEnabled;
 
+  if (!auth.isReady || (auth.user && !isCheckingEmail)) {
+    return (
+      <ScreenFrame>
+        <div role="status" className="flex min-h-dvh items-center justify-center gap-3 bg-vocali-cream text-vocali-teal">
+          <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin" />
+          <span>{auth.isReady ? "Opening your account..." : "Checking your session..."}</span>
+        </div>
+      </ScreenFrame>
+    );
+  }
+
   return (
     <ScreenFrame>
       <section className="vocali-safe-top vocali-safe-top-tight vocali-safe-bottom mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-5 pt-8 sm:min-h-[760px]">

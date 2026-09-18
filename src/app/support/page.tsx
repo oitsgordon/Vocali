@@ -1,6 +1,5 @@
-import Link from "next/link";
+import { PublicPageLinks } from "@/components/shared/PublicPageLinks";
 import {
-  ArrowLeft,
   CircleHelp,
   KeyRound,
   Mail,
@@ -38,7 +37,8 @@ const supportTopics = [
   },
 ];
 
-export default function SupportPage() {
+export default async function SupportPage({ searchParams }: { searchParams: Promise<{ returnTo?: string | string[] }> }) {
+  const { returnTo } = await searchParams;
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
 
   return (
@@ -119,21 +119,7 @@ export default function SupportPage() {
           </div>
         </section>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Link
-            href="/privacy"
-            className="flex h-14 items-center justify-center rounded-[1.1rem] bg-white text-base font-black text-vocali-teal shadow-vocali-card"
-          >
-            Privacy policy
-          </Link>
-          <Link
-            href="/profile"
-            className="flex h-14 items-center justify-center gap-2 rounded-[1.1rem] bg-vocali-orange text-base font-black text-white"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={3} />
-            Back to profile
-          </Link>
-        </div>
+        <PublicPageLinks page="/support" returnTo={returnTo} />
       </section>
     </ScreenFrame>
   );

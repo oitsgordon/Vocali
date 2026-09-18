@@ -28,7 +28,7 @@ describe("custom Vocali subscription screens", () => {
     const controls = read("src/components/subscriptions/SubscriptionControls.tsx");
     expect(screen).toContain("Change plan");
     expect(controls).toContain("Restore purchases");
-    expect(screen).toContain("Cancel or confirm in Apple settings");
+    expect(screen).toContain("Cancel subscription");
     expect(screen).toContain("purchaseRevenueCatPlan");
   });
 });
