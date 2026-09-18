@@ -160,6 +160,14 @@ export async function refreshRevenueCatCustomerInfo() {
   return loadCustomer(identityRevision);
 }
 
+// SDK readiness alone is not proof that subscription data refreshed successfully.
+export async function refreshSubscriptionInformation(userId: string | null) {
+  const result = await initializeRevenueCat(userId, true);
+  if (!result.ok) return result;
+  if (snapshot.customerStatus !== "ready") return failure(snapshot.customerError ?? "Your subscription status could not be refreshed.");
+  return success();
+}
+
 async function transaction(work: () => Promise<RevenueCatActionResult>) {
   if (snapshot.busy) return failure("A subscription request is already in progress.");
   update({ busy: true });

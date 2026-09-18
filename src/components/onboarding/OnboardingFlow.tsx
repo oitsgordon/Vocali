@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { MascotPlaceholder } from "@/components/brand/MascotPlaceholder";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
@@ -105,6 +105,8 @@ export function OnboardingFlow() {
         <VocaliLogo size="sm" />
         <StepDots activeStep={step} />
       </div>
+
+      {step > 0 ? <button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} className="mt-3 flex min-h-11 w-fit items-center gap-2 text-sm font-black text-vocali-teal"><ArrowLeft aria-hidden="true" className="h-4 w-4" />Back</button> : null}
 
       {step === 0 ? (
         <WelcomeStep onNext={() => setStep(1)} />

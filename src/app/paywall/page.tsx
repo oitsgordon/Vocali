@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 type PaywallPageProps = {
-  searchParams: Promise<{ from?: string | string[]; mode?: string | string[]; redirect?: string | string[] }>;
+  searchParams: Promise<{ from?: string | string[]; mode?: string | string[]; redirect?: string | string[]; plan?: string | string[] }>;
 };
 
 function first(value: string | string[] | undefined) {
@@ -25,5 +25,6 @@ export default async function PaywallPage({ searchParams }: PaywallPageProps) {
     from: source === "settings" || source === "subscription" || source === "login" ? source : undefined,
     mode: first(params.mode) === "signup" ? "signup" : "login",
     redirect: first(params.redirect),
+    plan: first(params.plan),
   }} />;
 }

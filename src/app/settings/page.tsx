@@ -79,6 +79,7 @@ function SettingsContent({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [savePreferenceStatus, setSavePreferenceStatus] =
     useState<SavePreferenceStatus>("idle");
   const [preferences, setPreferences] = useState<UserPreferences>(
@@ -201,28 +202,30 @@ function SettingsContent({
     }
 
     setIsDeletingAccount(true);
-    setMessage(null);
-    const result = await deleteAccount();
+    setDeleteError(null);
+    try {
+      const result = await deleteAccount();
 
-    if (!result.ok) {
+      if (!result.ok) {
+        setDeleteError(result.error ?? "Your account could not be deleted.");
+        return;
+      }
+
+      await clearAllLocalVocaliData();
+      await signOut();
+
+      if (result.manualAppleRevocationRequired) {
+        window.alert(
+          "Your Vocali account was deleted. To remove the remaining Apple authorization, open iPhone Settings, tap your name, choose Sign in with Apple, select Vocali, then tap Delete.",
+        );
+      }
+
+      window.location.replace("/");
+    } catch {
+      setDeleteError("Your account could not be deleted. Please try again or contact support.");
+    } finally {
       setIsDeletingAccount(false);
-      setMessage({
-        tone: "warning",
-        text: result.error ?? "Your account could not be deleted.",
-      });
-      return;
     }
-
-    await clearAllLocalVocaliData();
-    await signOut();
-
-    if (result.manualAppleRevocationRequired) {
-      window.alert(
-        "Your Vocali account was deleted. To remove the remaining Apple authorization, open iPhone Settings, tap your name, choose Sign in with Apple, select Vocali, then tap Delete.",
-      );
-    }
-
-    window.location.replace("/");
   }
 
   return (
@@ -353,14 +356,11 @@ function SettingsContent({
 
           <div className="mt-5 space-y-3">
             <SettingsLink
-              href={revenueCat.isPro ? "/settings/subscription" : "/paywall?from=settings"}
+              href="/settings/subscription"
               icon={CreditCard}
-              label={
-                revenueCat.isPro
-                  ? "Manage subscription"
-                  : "View subscription options"
-              }
+              label="Manage subscription"
             />
+            <SettingsLink href="/paywall?from=settings" icon={Crown} label="View subscription options" />
             <SubscriptionControls />
           </div>
         </section>
@@ -390,12 +390,13 @@ function SettingsContent({
                 label="Change password"
               />
             ) : null}
-            <SettingsLink href="/privacy" icon={ShieldCheck} label="Privacy" />
-            <SettingsLink href="/support" icon={LifeBuoy} label="Support" />
+            <SettingsLink href="/privacy?returnTo=%2Fsettings" icon={ShieldCheck} label="Privacy" />
+            <SettingsLink href="/support?returnTo=%2Fsettings" icon={LifeBuoy} label="Support" />
             <button
               type="button"
               onClick={() => {
                 setDeleteConfirmation("");
+                setDeleteError(null);
                 setIsDeleteDialogOpen(true);
               }}
               className="flex w-full items-center justify-between gap-4 rounded-[1.1rem] bg-vocali-orange/10 px-4 py-3 text-left"
@@ -532,6 +533,7 @@ function SettingsContent({
                   className="h-12 w-full rounded-[1rem] border-2 border-vocali-border bg-vocali-cream px-4 text-base font-black text-vocali-teal-deep outline-none focus:border-vocali-orange"
                 />
               </label>
+              {deleteError ? <p role="alert" className="mt-3 text-sm font-bold leading-5 text-vocali-teal-deep">{deleteError}</p> : null}
               <button
                 type="button"
                 onClick={() => void handleDeleteAccount()}

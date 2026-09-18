@@ -47,7 +47,7 @@ describe("paywall presentation", () => {
       "Unlock daily prompts, transcripts, and streaks.",
     );
     expect(screen).toContain('const benefits = ["Daily prompts", "Transcript review", "Streak tracking"]');
-    expect(screen).toContain('href="/privacy"');
+    expect(screen).toContain('publicPageHref("/privacy", paywallHref(entry, selectedPlanId))');
     expect(screen).toContain("itunes/dev/stdeula");
     expect(screen).toContain("bg-vocali-cream sm:min-h-[860px]");
     expect(screen).toContain("rounded-t-[2rem]");
