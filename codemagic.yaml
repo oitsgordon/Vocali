@@ -27,6 +27,8 @@ workflows:
     integrations:
       app_store_connect: vocali-upload
     environment:
+      xcode: 26.4
+      node: 22
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.vocali.app
