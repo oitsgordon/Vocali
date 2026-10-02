@@ -58,6 +58,7 @@ describe("clearAllLocalVocaliData", () => {
     const localStorage = new MemoryStorage();
     const sessionStorage = new MemoryStorage();
     localStorage.setItem("vocali:user-preferences:v1", "stored");
+    localStorage.setItem("vocali:guest-trial-completed:v1", "true");
     localStorage.setItem("unrelated", "keep");
     sessionStorage.setItem("vocali:oauth-redirect", "/home");
 
@@ -74,6 +75,7 @@ describe("clearAllLocalVocaliData", () => {
     expect(mocks.clearStoredDailyChallenge).toHaveBeenCalledOnce();
     expect(mocks.clearStreakCelebration).toHaveBeenCalledOnce();
     expect(window.localStorage.getItem("vocali:user-preferences:v1")).toBeNull();
+    expect(window.localStorage.getItem("vocali:guest-trial-completed:v1")).toBeNull();
     expect(window.sessionStorage.getItem("vocali:oauth-redirect")).toBeNull();
     expect(window.localStorage.getItem("unrelated")).toBe("keep");
   });

@@ -40,5 +40,10 @@ describe("iOS release configuration", () => {
     expect(codemagic).toContain("submit_to_testflight: true");
     expect(codemagic).toContain("submit_to_app_store: false");
     expect(codemagic).toContain("Verify hosted release pages");
+    expect(codemagic).toContain("accessGateEnabled");
+    expect(codemagic).toContain("turnstileConfigured");
+    expect(codemagic).toContain("supportEmailConfigured");
+    expect(codemagic).toContain("xcode: 26.4");
+    expect(codemagic).toContain("node: 22");
   });
 });

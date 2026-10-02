@@ -18,6 +18,12 @@ const privacySections = [
       "Vocali stores your email address, account identifier, display name, focus area, and daily goal so you can sign in and keep your profile consistent across devices. Apple may provide a private relay email when you choose Hide My Email.",
   },
   {
+    title: "Guest practice",
+    icon: UserRound,
+    copy:
+      "Before creating an account, Vocali can create a temporary anonymous Supabase identifier for one practice rep. That guest attempt stays on your device and is not added to synced practice history. Vocali tries to remove the temporary account when the rep finishes; abandoned anonymous accounts are removed after 30 days.",
+  },
+  {
     title: "Practice history",
     icon: Database,
     copy:
@@ -33,13 +39,13 @@ const privacySections = [
     title: "Service providers",
     icon: Cloud,
     copy:
-      "Supabase provides authentication and synced data storage. OpenAI processes submitted audio to return a transcript. Vercel hosts the Vocali web application and server routes. These providers process data only as needed to operate Vocali under their service terms.",
+      "Supabase provides authentication and synced data storage. OpenAI processes submitted audio to return a transcript. Vercel hosts the app and server routes. Cloudflare Turnstile helps prevent guest-trial abuse. RevenueCat processes subscription status and purchase records, while Apple processes billing and App Store transactions. These providers process data only as needed to operate Vocali under their service terms.",
   },
   {
     title: "Retention and deletion",
     icon: Clock3,
     copy:
-      "Synced account data remains until you delete your Vocali account. Device recordings and local practice data remain until you clear them, reset the app, remove site data, or delete your account. Permanent account deletion is available in Settings and removes your account and associated synced data.",
+      "Synced account data remains until you delete your Vocali account. Device recordings and local practice data remain until you clear them, reset the app, remove site data, or delete your account. Permanent account deletion removes your account and associated synced data, but it does not cancel an Apple subscription; subscriptions are managed separately in Apple settings.",
   },
 ];
 
@@ -72,7 +78,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
             device, who processes it, and how to remove your information.
           </p>
           <p className="mt-3 text-sm font-bold text-vocali-muted">
-            Last updated: 18 July 2026
+            Last updated: 2 October 2026
           </p>
         </div>
 

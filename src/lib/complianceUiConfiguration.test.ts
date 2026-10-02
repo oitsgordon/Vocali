@@ -35,6 +35,8 @@ describe("App Store compliance UI", () => {
 
     expect(settings).toContain('deleteConfirmation !== "DELETE"');
     expect(settings).toContain("Delete account permanently");
+    expect(settings).toContain("does not cancel billing through Apple");
+    expect(settings).toContain("Manage Apple subscription");
     expect(accountRoute).toContain('body.confirmation !== "DELETE"');
     expect(settings).toContain("clearAllLocalVocaliData");
   });
@@ -47,6 +49,11 @@ describe("App Store compliance UI", () => {
     expect(support).toContain("NEXT_PUBLIC_SUPPORT_EMAIL");
     expect(privacy).toContain("OpenAI");
     expect(privacy).toContain("Supabase");
+    expect(privacy).toContain("RevenueCat");
+    expect(privacy).toContain("Cloudflare Turnstile");
+    expect(privacy).toContain("30 days");
+    expect(support).toContain("Restore purchases");
+    expect(support).toContain("does not cancel an Apple subscription");
     expect(support).toContain("mailto:");
   });
 });
