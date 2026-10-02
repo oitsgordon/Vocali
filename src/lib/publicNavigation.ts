@@ -2,8 +2,8 @@ import { safeInternalDestination, type PaywallEntry } from "./subscriptionPresen
 
 export function paywallHref(entry: PaywallEntry, plan?: string) {
   const params = new URLSearchParams();
-  if (["settings", "subscription", "login"].includes(entry.from ?? "")) params.set("from", entry.from!);
-  if (entry.from === "login") {
+  if (["settings", "subscription", "login", "onboarding", "gate"].includes(entry.from ?? "")) params.set("from", entry.from!);
+  if (["login", "onboarding", "gate"].includes(entry.from ?? "")) {
     params.set("mode", entry.mode === "signup" ? "signup" : "login");
     params.set("redirect", safeInternalDestination(entry.redirect));
   }

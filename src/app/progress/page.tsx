@@ -8,7 +8,7 @@ import {
   Flame,
   MessageCircle,
 } from "lucide-react";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { StreakCard } from "@/components/dashboard/DashboardCards";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
@@ -28,7 +28,7 @@ export default function ProgressPage() {
   const patternInsights = getSpeakingPatternInsights(attempts);
 
   return (
-    <AuthGate>
+    <SubscriptionGate>
       <ScreenFrame withNavPadding>
         <section className="vocali-safe-top px-5 pb-8 pt-7">
           <div>
@@ -56,7 +56,7 @@ export default function ProgressPage() {
         </section>
         <BottomNav />
       </ScreenFrame>
-    </AuthGate>
+    </SubscriptionGate>
   );
 }
 

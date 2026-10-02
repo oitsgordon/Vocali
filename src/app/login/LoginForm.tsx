@@ -25,6 +25,7 @@ import {
   saveUserPreferences,
 } from "@/lib/userPreferences";
 import { loginPaywallHref } from "@/lib/subscriptionPresentation";
+import { isAnonymousUser } from "@/lib/guestTrial";
 
 type AuthMode = "login" | "signup";
 type OAuthProvider = "apple" | "google";
@@ -60,12 +61,13 @@ export function LoginForm({
   );
   const suppressAuthRedirectRef = useRef(false);
   const isSignup = mode === "signup";
+  const hasPermanentUser = Boolean(auth.user && !isAnonymousUser(auth.user));
 
   useEffect(() => {
-    if (auth.isReady && auth.user && !suppressAuthRedirectRef.current) {
+    if (auth.isReady && hasPermanentUser && !suppressAuthRedirectRef.current) {
       router.replace(redirectPath);
     }
-  }, [auth.isReady, auth.user, redirectPath, router]);
+  }, [auth.isReady, hasPermanentUser, redirectPath, router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,6 +94,7 @@ export function LoginForm({
           displayName: trimmedDisplayName,
           email,
           password,
+          redirectPath,
         })
       : await signInWithEmail({
           email,
@@ -165,7 +168,7 @@ export function LoginForm({
   const shouldShowSocialAuth =
     isAppleSignInEnabled || isGoogleSignInEnabled;
 
-  if (!auth.isReady || (auth.user && !isCheckingEmail)) {
+  if (!auth.isReady || (hasPermanentUser && !isCheckingEmail)) {
     return (
       <ScreenFrame>
         <div role="status" className="flex min-h-dvh items-center justify-center gap-3 bg-vocali-cream text-vocali-teal">

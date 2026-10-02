@@ -64,6 +64,10 @@ export async function syncPracticeAttempt(
   attempt: LocalAttempt,
   userId = activeUserId,
 ) {
+  if (attempt.guestTrial) {
+    return { ok: true, error: null };
+  }
+
   const supabase = getSupabaseClient();
 
   if (!supabase || !userId) {

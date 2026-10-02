@@ -38,6 +38,8 @@ import {
 import { calculateSpeakingMetrics } from "@/lib/speakingMetrics";
 import { queueStreakCelebration } from "@/lib/streakCelebration";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { closeGuestTrialSession } from "@/lib/authStore";
+import { markGuestTrialCompleted } from "@/lib/guestTrial";
 import type {
   Challenge,
   FeedbackSignal,
@@ -246,6 +248,7 @@ type PracticeSessionProps = {
   categorySlug?: string;
   challengeId?: string;
   isDailyChallenge?: boolean;
+  isGuestTrial?: boolean;
   planningSeconds?: number;
   source?: "home" | "onboarding" | "practice";
   speakingSeconds?: number;
@@ -255,6 +258,7 @@ export function PracticeSession({
   categorySlug,
   challengeId,
   isDailyChallenge = false,
+  isGuestTrial = false,
   planningSeconds = 30,
   source = "practice",
   speakingSeconds = 60,
@@ -810,6 +814,10 @@ export function PracticeSession({
     setTranscriptionError(null);
     setPhase("transcribing");
 
+    if (isGuestTrial) {
+      markGuestTrialCompleted();
+    }
+
     const transcription = await requestTranscription(audioBlob);
 
     setTranscript(transcription.transcript || undefined);
@@ -908,6 +916,7 @@ export function PracticeSession({
         backLabel={backLabel}
         challenge={challenge}
         isDailyChallenge={isDailyChallenge}
+        isGuestTrial={isGuestTrial}
         onTryAgain={resetFlow}
         speakingSeconds={speakingSeconds}
         speakingMetrics={speakingMetrics}
@@ -1925,6 +1934,7 @@ type FeedbackViewProps = {
   backLabel: string;
   challenge: Challenge;
   isDailyChallenge: boolean;
+  isGuestTrial: boolean;
   onTryAgain: () => void;
   speakingSeconds: number;
   speakingMetrics?: SpeakingMetrics;
@@ -1940,6 +1950,7 @@ function FeedbackView({
   backLabel,
   challenge,
   isDailyChallenge,
+  isGuestTrial,
   onTryAgain,
   speakingSeconds,
   speakingMetrics,
@@ -1972,7 +1983,11 @@ function FeedbackView({
 
   async function finishPractice() {
     if (hasSavedAttemptRef.current) {
-      router.push("/home");
+      if (isGuestTrial) {
+        router.push("/login?mode=signup&redirect=%2Fpaywall%3Ffrom%3Donboarding%26redirect%3D%252Fhome");
+      } else {
+        router.push("/home");
+      }
       return;
     }
 
@@ -2007,7 +2022,17 @@ function FeedbackView({
         isDailyChallenge,
         dailyChallengeDate: isDailyChallenge ? todayKey : undefined,
         source: isDailyChallenge ? "daily" : "practice",
+        guestTrial: isGuestTrial || undefined,
       });
+
+      if (isGuestTrial) {
+        markGuestTrialCompleted();
+        await closeGuestTrialSession();
+        router.replace(
+          "/login?mode=signup&redirect=%2Fpaywall%3Ffrom%3Donboarding%26redirect%3D%252Fhome",
+        );
+        return;
+      }
 
       if (shouldShowStreakCelebration) {
         queueStreakCelebration({
@@ -2109,21 +2134,23 @@ function FeedbackView({
         </p>
       </div>
 
-      <div className="mt-auto grid grid-cols-2 gap-3 pt-7">
-        <button
-          type="button"
-          onClick={onTryAgain}
-          className="flex h-16 items-center justify-center rounded-[1.2rem] border-2 border-vocali-teal bg-white text-lg font-black text-vocali-teal"
-        >
-          Try again
-        </button>
+      <div className={`mt-auto gap-3 pt-7 ${isGuestTrial ? "block" : "grid grid-cols-2"}`}>
+        {!isGuestTrial ? (
+          <button
+            type="button"
+            onClick={onTryAgain}
+            className="flex h-16 items-center justify-center rounded-[1.2rem] border-2 border-vocali-teal bg-white text-lg font-black text-vocali-teal"
+          >
+            Try again
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={finishPractice}
           disabled={isFinishing}
           className="flex h-16 items-center justify-center rounded-[1.2rem] bg-vocali-orange text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
         >
-          {isFinishing ? "Saving..." : "Finish"}
+          {isFinishing ? "Saving..." : isGuestTrial ? "Continue" : "Finish"}
         </button>
       </div>
     </section>

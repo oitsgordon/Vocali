@@ -22,7 +22,7 @@ export default async function PaywallPage({ searchParams }: PaywallPageProps) {
   const params = await searchParams;
   const source = first(params.from);
   return <PaywallScreen entry={{
-    from: source === "settings" || source === "subscription" || source === "login" ? source : undefined,
+    from: source === "settings" || source === "subscription" || source === "login" || source === "onboarding" || source === "gate" ? source : undefined,
     mode: first(params.mode) === "signup" ? "signup" : "login",
     redirect: first(params.redirect),
     plan: first(params.plan),

@@ -20,6 +20,15 @@ export type RevenueCatSnapshot = {
   isPro: boolean;
   busy: boolean;
 };
+export type SubscriptionAccessState =
+  | "disabled"
+  | "anonymous_guest"
+  | "loading"
+  | "active"
+  | "active_until_expiry"
+  | "expired_or_missing"
+  | "unavailable"
+  | "error";
 export type RevenueCatActionResult =
   | { ok: true; cancelled: false; customerInfo: CustomerInfo | null }
   | { ok: false; cancelled: boolean; customerInfo: null; error: string };
@@ -39,6 +48,26 @@ let initialization: Promise<RevenueCatActionResult> | null = null;
 
 export function useRevenueCat() {
   return useSyncExternalStore(subscribe, () => snapshot, () => serverSnapshot);
+}
+
+export function getSubscriptionAccessState({
+  enabled,
+  isAnonymous,
+  state,
+}: {
+  enabled: boolean;
+  isAnonymous: boolean;
+  state: RevenueCatSnapshot;
+}): SubscriptionAccessState {
+  if (!enabled) return "disabled";
+  if (isAnonymous) return "anonymous_guest";
+  if (state.status === "unavailable" || state.status === "configuration_required") return "unavailable";
+  if (state.status === "error" || state.customerStatus === "error") return "error";
+  if (state.customerStatus !== "ready") return "loading";
+  if (!state.isPro) return "expired_or_missing";
+
+  const entitlement = state.customerInfo?.entitlements.all[REVENUECAT_ENTITLEMENT_ID];
+  return entitlement?.willRenew === false ? "active_until_expiry" : "active";
 }
 function subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }
 function update(next: Partial<RevenueCatSnapshot>) {

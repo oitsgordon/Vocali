@@ -8,7 +8,7 @@ import type { RevenueCatSnapshot } from "@/lib/revenueCat";
 const mocks = vi.hoisted(() => ({
   state: {} as RevenueCatSnapshot,
   auth: { isReady: true, user: { id: "test-user" } as { id: string } | null, errorMessage: null, syncMessage: null },
-  purchase: vi.fn(), restore: vi.fn(), initialize: vi.fn(), refresh: vi.fn(), replace: vi.fn(), push: vi.fn(), deleteAccount: vi.fn(),
+  purchase: vi.fn(), restore: vi.fn(), initialize: vi.fn(), refresh: vi.fn(), replace: vi.fn(), push: vi.fn(), deleteAccount: vi.fn(), signInForGuestTrial: vi.fn(),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace, push: mocks.push }) }));
 vi.mock("next/link", () => ({ default: ({ children, ...props }: React.ComponentProps<"a">) => <a {...props}>{children}</a> }));
@@ -16,9 +16,12 @@ vi.mock("@/components/layout/ScreenFrame", () => ({ ScreenFrame: ({ children }: 
 vi.mock("@/components/brand/VocaliLogo", () => ({ VocaliLogo: () => <span>Vocali</span> }));
 vi.mock("@/components/brand/MascotPlaceholder", () => ({ MascotPlaceholder: () => null }));
 vi.mock("@/components/auth/AuthGate", () => ({ AuthGate: ({ children }: { children: ReactNode }) => children }));
+vi.mock("@/components/auth/TurnstileChallenge", () => ({
+  TurnstileChallenge: ({ onToken }: { onToken: (token: string) => void }) => <button type="button" onClick={() => onToken("captcha-token")}>Complete security check</button>,
+}));
 vi.mock("@/lib/authStore", () => ({
   useAuth: () => mocks.auth, isNativeAppleSignInAvailable: () => false, deleteAccount: mocks.deleteAccount,
-  signInWithApple: vi.fn(), signInWithGoogle: vi.fn(), signInWithEmail: vi.fn(), signUpWithEmail: vi.fn(), requestPasswordReset: vi.fn(), signOut: vi.fn(),
+  signInWithApple: vi.fn(), signInWithGoogle: vi.fn(), signInWithEmail: vi.fn(), signUpWithEmail: vi.fn(), requestPasswordReset: vi.fn(), signOut: vi.fn(), signInForGuestTrial: mocks.signInForGuestTrial,
 }));
 vi.mock("@/lib/revenueCat", () => ({
   useRevenueCat: () => mocks.state,
@@ -57,6 +60,7 @@ beforeEach(() => {
   mocks.initialize.mockResolvedValue({ ok: true });
   mocks.refresh.mockResolvedValue({ ok: true });
   mocks.purchase.mockResolvedValue({ ok: true });
+  mocks.signInForGuestTrial.mockResolvedValue({ ok: true, error: null });
 });
 afterEach(cleanup);
 
@@ -169,5 +173,17 @@ describe("account and onboarding navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("button", { name: "Interview practice" }).getAttribute("aria-pressed")).toBe("true");
+  });
+  it("starts one guest rep only after the security check", async () => {
+    mocks.auth.user = null;
+    render(<OnboardingFlow />);
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect((screen.getByRole("button", { name: "Try quick rep" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Complete security check" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try quick rep" }));
+    await waitFor(() => expect(mocks.signInForGuestTrial).toHaveBeenCalledWith("captcha-token"));
+    expect(mocks.push).toHaveBeenCalledWith(expect.stringContaining("source=onboarding"));
   });
 });

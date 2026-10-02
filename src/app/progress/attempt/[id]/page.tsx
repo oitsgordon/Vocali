@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CalendarDays, Clock3, Mic, Play } from "lucide-react";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { ExpandableTranscript } from "@/components/shared/ExpandableTranscript";
@@ -33,15 +33,15 @@ export default function AttemptDetailPage() {
 
   if (hasLoadedAttempts && !attempt) {
     return (
-      <AuthGate>
+      <SubscriptionGate>
         <MissingAttemptState />
-      </AuthGate>
+      </SubscriptionGate>
     );
   }
 
   if (!attempt) {
     return (
-      <AuthGate>
+      <SubscriptionGate>
         <ScreenFrame>
           <section className="vocali-safe-top vocali-safe-bottom flex min-h-dvh flex-col px-5 pb-7 pt-7 sm:min-h-[860px]">
             <AttemptHeader />
@@ -52,12 +52,12 @@ export default function AttemptDetailPage() {
             </div>
           </section>
         </ScreenFrame>
-      </AuthGate>
+      </SubscriptionGate>
     );
   }
 
   return (
-    <AuthGate>
+    <SubscriptionGate>
       <ScreenFrame>
         <section className="vocali-safe-top vocali-safe-bottom min-h-dvh px-5 pb-7 pt-7 sm:min-h-[860px]">
         <AttemptHeader />
@@ -98,7 +98,7 @@ export default function AttemptDetailPage() {
         </div>
         </section>
       </ScreenFrame>
-    </AuthGate>
+    </SubscriptionGate>
   );
 }
 
