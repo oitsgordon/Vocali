@@ -520,6 +520,19 @@ function SettingsContent({
                 history, transcripts, and metrics. It cannot be undone. Type
                 DELETE to continue.
               </p>
+              <div className="mt-4 rounded-[1rem] border border-vocali-orange/25 bg-vocali-orange/10 p-3">
+                <p className="text-sm font-black leading-5 text-vocali-teal-deep">
+                  Deleting your Vocali account does not cancel billing through Apple.
+                </p>
+                <a
+                  href="https://apps.apple.com/account/subscriptions"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex min-h-8 items-center text-sm font-black text-vocali-teal underline underline-offset-4"
+                >
+                  Manage Apple subscription
+                </a>
+              </div>
               <label className="mt-4 block">
                 <span className="sr-only">Type DELETE to confirm</span>
                 <input

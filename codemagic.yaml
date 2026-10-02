@@ -82,6 +82,17 @@ workflows:
           readiness = json.loads(os.environ["RELEASE_READINESS_JSON"])
           revenue_cat = readiness.get("revenueCat", {})
 
+          required_checks = {
+              "accessGateEnabled": "Subscription access enforcement is disabled.",
+              "supportEmailConfigured": "The support email is missing.",
+              "turnstileConfigured": "The Turnstile site key is missing.",
+          }
+
+          for field, message in required_checks.items():
+              if not readiness.get(field):
+                  print(message, file=sys.stderr)
+                  sys.exit(1)
+
           if not revenue_cat.get("configured"):
               print("RevenueCat is not configured on the hosted production app.", file=sys.stderr)
               sys.exit(1)
@@ -99,6 +110,10 @@ workflows:
 
           if configured_products != expected_products:
               print("RevenueCat product identifiers are not yearly and monthly.", file=sys.stderr)
+              sys.exit(1)
+
+          if not readiness.get("ready"):
+              print("The hosted Vocali release configuration is incomplete.", file=sys.stderr)
               sys.exit(1)
           PY
       - name: Verify App Store Connect app access

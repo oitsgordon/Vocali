@@ -5,6 +5,7 @@ import {
   Mail,
   Mic,
   RefreshCcw,
+  CreditCard,
   Trash2,
 } from "lucide-react";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
@@ -30,10 +31,16 @@ const supportTopics = [
       "Check your connection and try the recording again. Temporary limits or provider outages may prevent a transcript, but basic practice feedback can still continue.",
   },
   {
+    title: "Subscriptions and purchases",
+    icon: CreditCard,
+    copy:
+      "Open Settings, then Manage subscription to refresh status, restore an existing purchase, or change plans. Apple handles billing and cancellation. If a purchase does not appear, confirm the same Apple ID is signed in, use Restore purchases, and contact support if access is still missing.",
+  },
+  {
     title: "Delete data or account",
     icon: Trash2,
     copy:
-      "Settings separates device-only data controls from permanent account deletion. Deleting your account removes the account and synced data; resetting device data does not delete the account.",
+      "Settings separates device-only data controls from permanent account deletion. Deleting your account removes the account and synced data; resetting device data does not delete the account. Deleting Vocali does not cancel an Apple subscription, which must be cancelled separately in Apple settings.",
   },
 ];
 
