@@ -104,7 +104,8 @@ function isLocalAttempt(value: unknown): value is LocalAttempt {
       typeof value.dailyChallengeDate === "string") &&
     (value.source === undefined ||
       value.source === "daily" ||
-      value.source === "practice")
+      value.source === "practice") &&
+    (value.guestTrial === undefined || typeof value.guestTrial === "boolean")
   );
 }
 
@@ -201,7 +202,9 @@ export function saveAttempt(attempt: LocalAttempt) {
     cachedAttempts = nextAttempts;
     window.localStorage.setItem(attemptsStorageKey, rawAttempts);
     dispatchAttemptsChanged();
-    void syncPracticeAttempt(attempt);
+    if (!attempt.guestTrial) {
+      void syncPracticeAttempt(attempt);
+    }
   } catch {
     cachedRawAttempts = null;
     cachedAttempts = emptyAttempts;

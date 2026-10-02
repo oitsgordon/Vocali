@@ -6,7 +6,7 @@ import {
   RecentFeedbackCard,
   StreakCard,
 } from "@/components/dashboard/DashboardCards";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { useUserPreferences } from "@/lib/useUserPreferences";
@@ -18,7 +18,7 @@ export default function HomeDashboard() {
     : "there";
 
   return (
-    <AuthGate>
+    <SubscriptionGate>
       <ScreenFrame withNavPadding>
         <section className="vocali-safe-top px-5 pb-8 pt-7">
           <p className="text-lg font-black text-vocali-teal">Hi {greetingName}</p>
@@ -32,6 +32,6 @@ export default function HomeDashboard() {
         </section>
         <BottomNav />
       </ScreenFrame>
-    </AuthGate>
+    </SubscriptionGate>
   );
 }

@@ -1,4 +1,5 @@
-import { AuthGate } from "@/components/auth/AuthGate";
+import { GuestPracticeGate } from "@/components/auth/GuestPracticeGate";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { PracticeSession } from "@/components/practice/PracticeSession";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 
@@ -58,18 +59,23 @@ export default async function PracticeSessionPage({
   const speakingSeconds = getSpeakingSeconds(params.speak);
   const source = getSessionSource(params.source);
 
-  return (
-    <AuthGate>
+  const session = (
       <ScreenFrame>
         <PracticeSession
           categorySlug={categorySlug}
           challengeId={challengeId}
           isDailyChallenge={source === "home" || source === "onboarding"}
+          isGuestTrial={source === "onboarding"}
           planningSeconds={planningSeconds}
           source={source}
           speakingSeconds={speakingSeconds}
         />
       </ScreenFrame>
-    </AuthGate>
+  );
+
+  return source === "onboarding" ? (
+    <GuestPracticeGate>{session}</GuestPracticeGate>
+  ) : (
+    <SubscriptionGate>{session}</SubscriptionGate>
   );
 }

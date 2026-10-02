@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authenticateSupabaseRequest } = vi.hoisted(() => ({
+const { authenticateSupabaseRequest, getRevenueCatEntitlement } = vi.hoisted(() => ({
   authenticateSupabaseRequest: vi.fn(),
+  getRevenueCatEntitlement: vi.fn(),
 }));
 
 vi.mock("@/lib/supabaseServer", () => ({ authenticateSupabaseRequest }));
+vi.mock("@/lib/revenueCatServer", () => ({ getRevenueCatEntitlement }));
 
 import { POST } from "./route";
 
@@ -18,7 +20,7 @@ function createAuthenticatedResult(
       client: {
         rpc: vi.fn().mockResolvedValue({ data: [quota], error: null }),
       },
-      user: { id: "user-1" },
+      user: { id: "user-1", is_anonymous: false },
     },
   };
 }
@@ -40,12 +42,16 @@ function createAudioRequest(size = 4, type = "audio/webm") {
 describe("POST /api/transcribe", () => {
   beforeEach(() => {
     process.env.OPENAI_API_KEY = "test-openai-key";
+    process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED = "true";
     authenticateSupabaseRequest.mockReset();
+    getRevenueCatEntitlement.mockReset();
+    getRevenueCatEntitlement.mockResolvedValue({ ok: true, active: true, expiresAt: null });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     delete process.env.OPENAI_API_KEY;
+    delete process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED;
   });
 
   it("rejects unauthenticated requests", async () => {
@@ -86,6 +92,47 @@ describe("POST /api/transcribe", () => {
     await expect(response.json()).resolves.toMatchObject({
       errorCode: "quota_exceeded",
     });
+  });
+
+  it("requires Vocali Pro for a permanent account before reserving quota", async () => {
+    const auth = createAuthenticatedResult();
+    authenticateSupabaseRequest.mockResolvedValue(auth);
+    getRevenueCatEntitlement.mockResolvedValue({ ok: true, active: false, expiresAt: null });
+
+    const response = await POST(createAudioRequest());
+
+    expect(response.status).toBe(403);
+    expect(auth.auth.client.rpc).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      errorCode: "subscription_required",
+    });
+  });
+
+  it("fails safely before quota or OpenAI when RevenueCat is unavailable", async () => {
+    const auth = createAuthenticatedResult();
+    authenticateSupabaseRequest.mockResolvedValue(auth);
+    getRevenueCatEntitlement.mockResolvedValue({ ok: false, reason: "provider" });
+    const providerFetch = vi.fn();
+    vi.stubGlobal("fetch", providerFetch);
+
+    const response = await POST(createAudioRequest());
+
+    expect(response.status).toBe(503);
+    expect(auth.auth.client.rpc).not.toHaveBeenCalled();
+    expect(providerFetch).not.toHaveBeenCalled();
+  });
+
+  it("allows an anonymous guest to use the database-backed one-rep quota", async () => {
+    const auth = createAuthenticatedResult();
+    auth.auth.user.is_anonymous = true;
+    authenticateSupabaseRequest.mockResolvedValue(auth);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ text: "Guest rep." })));
+
+    const response = await POST(createAudioRequest());
+
+    expect(response.status).toBe(200);
+    expect(getRevenueCatEntitlement).not.toHaveBeenCalled();
+    expect(auth.auth.client.rpc).toHaveBeenCalledOnce();
   });
 
   it("maps provider failures to a safe 502 response", async () => {

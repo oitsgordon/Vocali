@@ -16,6 +16,7 @@ import {
 } from "@/lib/supabaseRemote";
 import { syncSignedInUserData } from "@/lib/supabaseSync";
 import { defaultUserPreferences } from "@/lib/userPreferences";
+import { isAnonymousUser } from "@/lib/guestTrial";
 
 type AuthSnapshot = {
   errorMessage: string | null;
@@ -78,9 +79,9 @@ export function initializeAuthStore() {
 
     const user = data.session?.user ?? null;
     updateSnapshot({ isReady: true, user });
-    setSupabaseSyncUserId(user?.id ?? null);
+    setSupabaseSyncUserId(user && !isAnonymousUser(user) ? user.id : null);
 
-    if (user) {
+    if (user && !isAnonymousUser(user)) {
       void runUserSync(user.id);
     }
   });
@@ -88,9 +89,9 @@ export function initializeAuthStore() {
   supabase.auth.onAuthStateChange((_event, session) => {
     const user = session?.user ?? null;
     updateSnapshot({ isReady: true, user });
-    setSupabaseSyncUserId(user?.id ?? null);
+    setSupabaseSyncUserId(user && !isAnonymousUser(user) ? user.id : null);
 
-    if (user) {
+    if (user && !isAnonymousUser(user)) {
       void runUserSync(user.id);
     } else {
       syncUserId = null;
@@ -110,10 +111,12 @@ export async function signUpWithEmail({
   displayName,
   email,
   password,
+  redirectPath = "/home",
 }: {
   displayName: string;
   email: string;
   password: string;
+  redirectPath?: string;
 }): Promise<AuthResult> {
   const supabase = getSupabaseClient();
 
@@ -131,7 +134,7 @@ export async function signUpWithEmail({
       data: {
         display_name: displayName,
       },
-      emailRedirectTo: getEmailConfirmationRedirectUrl(),
+      emailRedirectTo: getEmailConfirmationRedirectUrl(redirectPath),
     },
   });
 
@@ -149,6 +152,58 @@ export async function signUpWithEmail({
     );
   }
 
+  return { ok: true, error: null };
+}
+
+export async function signInForGuestTrial(
+  captchaToken: string,
+): Promise<AuthResult> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { ok: false, error: "Guest practice is not configured on this build." };
+  }
+
+  const { data, error } = await supabase.auth.signInAnonymously({
+    options: { captchaToken },
+  });
+
+  if (error || !data.user || !isAnonymousUser(data.user)) {
+    return {
+      ok: false,
+      error: error?.message ?? "Guest practice could not start. Please try again.",
+    };
+  }
+
+  setSupabaseSyncUserId(null);
+  updateSnapshot({ errorMessage: null, isReady: true, user: data.user });
+  return { ok: true, error: null };
+}
+
+export async function closeGuestTrialSession(): Promise<AuthResult> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { ok: false, error: "Account services are unavailable." };
+  }
+
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+
+  try {
+    if (accessToken) {
+      await fetch("/api/guest-session", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    }
+  } catch {
+    // Scheduled cleanup removes abandoned anonymous users. Local sign-out continues.
+  }
+
+  await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+  setSupabaseSyncUserId(null);
+  updateSnapshot({ isSyncing: false, syncMessage: null, user: null });
   return { ok: true, error: null };
 }
 
@@ -772,9 +827,10 @@ function updateSnapshot(nextSnapshot: Partial<AuthSnapshot>) {
   }
 }
 
-function getEmailConfirmationRedirectUrl() {
+function getEmailConfirmationRedirectUrl(redirectPath = "/home") {
+  const safeRedirectPath = sanitizeLocalRedirectPath(redirectPath);
   if (typeof window === "undefined") {
-    return "https://vocali-zeta.vercel.app/auth/confirmed";
+    return `https://vocali-zeta.vercel.app/auth/confirmed?redirect=${encodeURIComponent(safeRedirectPath)}`;
   }
 
   const isLocalHost =
@@ -784,7 +840,7 @@ function getEmailConfirmationRedirectUrl() {
     ? window.location.origin
     : "https://vocali-zeta.vercel.app";
 
-  return `${origin}/auth/confirmed`;
+  return `${origin}/auth/confirmed?redirect=${encodeURIComponent(safeRedirectPath)}`;
 }
 
 function sanitizeLocalRedirectPath(value: string) {

@@ -20,7 +20,11 @@ export function paywallReturn(entry: PaywallEntry, signedIn: boolean) {
   if (entry.from === "settings") return "/settings";
   if (entry.from === "subscription") return "/settings/subscription";
   if (entry.from === "login" && !signedIn) return "/login?" + new URLSearchParams({ mode: entry.mode === "signup" ? "signup" : "login", redirect: safeInternalDestination(entry.redirect) });
+  if (signedIn && (entry.from === "onboarding" || entry.from === "gate")) return "/settings";
   return signedIn ? "/home" : "/login";
+}
+export function paywallSuccessDestination(entry: PaywallEntry) {
+  return safeInternalDestination(entry.redirect);
 }
 export function subscriptionStatus(state: RevenueCatSnapshot) {
   if (state.status === "unavailable") return "Subscription status is available in the iPhone app.";

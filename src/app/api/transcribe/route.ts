@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { authenticateSupabaseRequest } from "@/lib/supabaseServer";
+import { getRevenueCatEntitlement } from "@/lib/revenueCatServer";
 
 const maxAudioSizeBytes = 10 * 1024 * 1024;
 const minuteTranscriptionLimit = 5;
@@ -26,6 +27,7 @@ type TranscriptionResponse = {
     | "not_authenticated"
     | "provider_unavailable"
     | "quota_exceeded"
+    | "subscription_required"
     | "service_unavailable";
   error?: string;
 };
@@ -115,6 +117,37 @@ export async function POST(request: Request) {
       },
       authResult.status,
     );
+  }
+
+  if (
+    process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === "true" &&
+    authResult.auth.user.is_anonymous !== true
+  ) {
+    const entitlement = await getRevenueCatEntitlement(authResult.auth.user.id);
+
+    if (!entitlement.ok) {
+      return jsonResponse(
+        {
+          transcript: "",
+          transcriptStatus: "failed",
+          errorCode: "service_unavailable",
+          error: "Subscription access could not be confirmed. Please try again.",
+        },
+        503,
+      );
+    }
+
+    if (!entitlement.active) {
+      return jsonResponse(
+        {
+          transcript: "",
+          transcriptStatus: "failed",
+          errorCode: "subscription_required",
+          error: "Vocali Pro is required to transcribe another practice rep.",
+        },
+        403,
+      );
+    }
   }
 
   const apiKey = process.env.OPENAI_API_KEY;

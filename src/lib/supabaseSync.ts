@@ -25,7 +25,7 @@ type SyncResult = {
 const migrationKeyPrefix = "vocali:supabase-migration:v1:";
 
 export async function syncSignedInUserData(userId: string): Promise<SyncResult> {
-  const localAttempts = getAttempts();
+  const localAttempts = getAttempts().filter((attempt) => !attempt.guestTrial);
   const localPreferences = getUserPreferences();
   const migrationKey = `${migrationKeyPrefix}${userId}`;
   const hasCompletedMigration = getMigrationComplete(migrationKey);

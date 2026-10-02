@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Check, Loader2, Sparkles } from "lucide-react";
+import { useCallback, useState } from "react";
 import { MascotPlaceholder } from "@/components/brand/MascotPlaceholder";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
+import { TurnstileChallenge } from "@/components/auth/TurnstileChallenge";
+import { signInForGuestTrial, useAuth } from "@/lib/authStore";
+import { hasCompletedGuestTrial, isAnonymousUser } from "@/lib/guestTrial";
 
 const focusOptions = [
   "Speaking more naturally",
@@ -50,6 +53,7 @@ const focusQuickRepPrompts: Record<
 };
 
 export function OnboardingFlow() {
+  const auth = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [selectedFocus, setSelectedFocus] = useState<FocusOption>(
@@ -57,6 +61,18 @@ export function OnboardingFlow() {
   );
   const [selectedHabit, setSelectedHabit] =
     useState<HabitOption>("1 short prompt");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const [isStartingGuestRep, setIsStartingGuestRep] = useState(false);
+  const paywallDestination = "/paywall?from=onboarding&redirect=%2Fhome";
+
+  const updateCaptchaToken = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
+
+  const updateGuestError = useCallback((message: string | null) => {
+    setGuestError(message);
+  }, []);
 
   function saveOnboardingChoices() {
     try {
@@ -75,11 +91,48 @@ export function OnboardingFlow() {
 
   function finishOnboarding() {
     saveOnboardingChoices();
-    router.push("/login?mode=signup&redirect=/home");
+    if (auth.user && !isAnonymousUser(auth.user)) {
+      router.push(paywallDestination);
+      return;
+    }
+    router.push(
+      `/login?${new URLSearchParams({ mode: "signup", redirect: paywallDestination })}`,
+    );
   }
 
-  function startQuickRep() {
+  async function startQuickRep() {
     saveOnboardingChoices();
+    setGuestError(null);
+
+    if (auth.user && !isAnonymousUser(auth.user)) {
+      router.push(paywallDestination);
+      return;
+    }
+
+    if (hasCompletedGuestTrial()) {
+      router.push(
+        `/login?${new URLSearchParams({ mode: "signup", redirect: paywallDestination })}`,
+      );
+      return;
+    }
+
+    if (!isAnonymousUser(auth.user)) {
+      if (!captchaToken) {
+        setGuestError("Complete the security check before starting your free rep.");
+        return;
+      }
+
+      setIsStartingGuestRep(true);
+      const result = await signInForGuestTrial(captchaToken);
+      setIsStartingGuestRep(false);
+
+      if (!result.ok) {
+        setCaptchaToken(null);
+        setGuestError(result.error);
+        return;
+      }
+    }
+
     const quickRep = focusQuickRepPrompts[selectedFocus];
     const params = new URLSearchParams({
       challenge: quickRep.challengeId,
@@ -88,11 +141,7 @@ export function OnboardingFlow() {
       source: "onboarding",
     });
 
-    router.push(
-      `/login?mode=signup&redirect=${encodeURIComponent(
-        `/practice/session?${params.toString()}`,
-      )}`,
-    );
+    router.push(`/practice/session?${params.toString()}`);
   }
 
   return (
@@ -135,8 +184,14 @@ export function OnboardingFlow() {
         <QuickRepStep
           focus={selectedFocus}
           prompt={focusQuickRepPrompts[selectedFocus].prompt}
+          captchaToken={captchaToken}
+          error={guestError}
+          hasGuestSession={isAnonymousUser(auth.user)}
+          isStarting={isStartingGuestRep}
+          onCaptchaError={updateGuestError}
+          onCaptchaToken={updateCaptchaToken}
           onSkip={finishOnboarding}
-          onStart={startQuickRep}
+          onStart={() => void startQuickRep()}
         />
       )}
     </section>
@@ -263,12 +318,24 @@ function ChoiceStep<T extends string>({
 }
 
 function QuickRepStep({
+  captchaToken,
+  error,
   focus,
+  hasGuestSession,
+  isStarting,
+  onCaptchaError,
+  onCaptchaToken,
   prompt,
   onSkip,
   onStart,
 }: {
+  captchaToken: string | null;
+  error: string | null;
   focus: FocusOption;
+  hasGuestSession: boolean;
+  isStarting: boolean;
+  onCaptchaError: (message: string | null) => void;
+  onCaptchaToken: (token: string | null) => void;
   prompt: string;
   onSkip: () => void;
   onStart: () => void;
@@ -303,12 +370,20 @@ function QuickRepStep({
       </div>
 
       <div className="mt-auto space-y-4 pt-7">
+        <TurnstileChallenge onError={onCaptchaError} onToken={onCaptchaToken} />
+        {error ? (
+          <p role="alert" className="rounded-[1rem] bg-vocali-orange/10 p-3 text-center text-sm font-bold leading-5 text-vocali-orange">
+            {error}
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={onStart}
-          className="flex h-16 w-full items-center justify-center rounded-[1.15rem] bg-vocali-orange px-6 text-xl font-black text-white shadow-[0_14px_24px_rgb(255_122_26/0.26)]"
+          disabled={isStarting || (!captchaToken && !hasGuestSession)}
+          className="flex h-16 w-full items-center justify-center gap-2 rounded-[1.15rem] bg-vocali-orange px-6 text-xl font-black text-white shadow-[0_14px_24px_rgb(255_122_26/0.26)] disabled:opacity-55"
         >
-          Try quick rep
+          {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+          {isStarting ? "Starting..." : "Try quick rep"}
         </button>
         <button
           type="button"

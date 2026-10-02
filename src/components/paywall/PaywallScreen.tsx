@@ -5,10 +5,11 @@ import { ArrowLeft, AudioLines, Check } from "lucide-react";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
 import { useAuth } from "@/lib/authStore";
+import { isAnonymousUser } from "@/lib/guestTrial";
 import { DEFAULT_PAYWALL_PLAN_ID, PAYWALL_PLANS, type PaywallPlanId } from "@/lib/paywallPlans";
 import { getRevenueCatPackage, initializeRevenueCat, purchaseRevenueCatPlan, restoreRevenueCatPurchases, trackVocaliPaywallImpression, useRevenueCat } from "@/lib/revenueCat";
 import { paywallHref, publicPageHref } from "@/lib/publicNavigation";
-import { paywallReturn, planPresentation, type PaywallEntry } from "@/lib/subscriptionPresentation";
+import { paywallReturn, paywallSuccessDestination, planPresentation, type PaywallEntry } from "@/lib/subscriptionPresentation";
 
 const benefits = ["Daily prompts", "Transcript review", "Streak tracking"];
 const safeBottomStyle = { "--vocali-safe-bottom-base": "0.5rem" } as CSSProperties;
@@ -21,7 +22,9 @@ export function PaywallScreen({ entry = {} }: { entry?: PaywallEntry }) {
   const [completed, setCompleted] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const actionLock = useRef(false);
+  const hasPermanentUser = Boolean(auth.user && !isAnonymousUser(auth.user));
   const returnHref = paywallReturn(entry, Boolean(auth.user));
+  const successHref = paywallSuccessDestination(entry);
   const isBrowserPreview = revenueCat.status === "unavailable";
   const selectedPackage = getRevenueCatPackage(selectedPlanId, revenueCat.offering);
   const selectedCopy = planPresentation(
@@ -54,7 +57,7 @@ export function PaywallScreen({ entry = {} }: { entry?: PaywallEntry }) {
     }
   }
 
-  const purchaseDisabled = !auth.isReady || revenueCat.busy || retrying || completed || revenueCat.status !== "ready" || !selectedCopy.available;
+  const purchaseDisabled = !auth.isReady || !hasPermanentUser || revenueCat.busy || retrying || completed || revenueCat.status !== "ready" || !selectedCopy.available;
   const connectionError = isBrowserPreview ? null : revenueCat.errorMessage ?? revenueCat.offeringError ?? revenueCat.customerError;
 
   async function retryConnection() {
@@ -75,7 +78,7 @@ export function PaywallScreen({ entry = {} }: { entry?: PaywallEntry }) {
             <ArrowLeft className="h-4 w-4" strokeWidth={3} /> Back
           </Link>
           <span className="text-xl font-black tracking-[-0.02em] text-vocali-teal-deep">Vocali</span>
-          <button type="button" disabled={!auth.isReady || retrying || revenueCat.busy || isBrowserPreview} onClick={() => void run("restore")} className="min-h-11 justify-self-end text-xs font-black text-vocali-teal disabled:opacity-55">Restore</button>
+          <button type="button" disabled={!auth.isReady || !hasPermanentUser || retrying || revenueCat.busy || isBrowserPreview} onClick={() => void run("restore")} className="min-h-11 justify-self-end text-xs font-black text-vocali-teal disabled:opacity-55">Restore</button>
         </header>
 
         <div className="relative z-10 flex min-h-0 flex-1 -translate-y-2 flex-col items-center justify-center px-6 pb-2 text-center [@media(max-height:600px)]:-translate-y-1">
@@ -116,10 +119,11 @@ export function PaywallScreen({ entry = {} }: { entry?: PaywallEntry }) {
           </div>
 
           <div className="mt-auto pt-5 [@media(max-height:600px)]:pt-2.5">
-            {completed ? <Link href={returnHref} className="flex min-h-14 w-full items-center justify-center rounded-[1rem] bg-vocali-orange px-4 text-base font-black text-white">Continue</Link> : (
+            {completed ? <Link href={successHref} className="flex min-h-14 w-full items-center justify-center rounded-[1rem] bg-vocali-orange px-4 text-base font-black text-white">Continue</Link> : (
               <button type="button" disabled={purchaseDisabled} onClick={() => void run("purchase")} className="flex min-h-14 w-full items-center justify-center rounded-[1rem] bg-vocali-orange px-4 text-base font-black text-white shadow-[0_12px_24px_rgb(255_122_26/0.24)] disabled:opacity-55">{revenueCat.busy ? "Connecting to App Store..." : selectedCopy.cta}</button>
             )}
             {isBrowserPreview ? <p className="mt-2 text-center text-[0.68rem] font-bold text-vocali-teal">Price preview in Australian dollars. Purchase in the Vocali iPhone app.</p> : null}
+            {!hasPermanentUser ? <p className="mt-2 text-center text-[0.68rem] font-bold text-vocali-teal">Create or sign in to your account before purchasing.</p> : null}
             <p className="mx-auto mt-2 max-w-[19.5rem] text-center text-[0.68rem] font-bold leading-[1.45] text-vocali-muted">{selectedCopy.renewal}</p>
             <p role="status" aria-live="polite" className="mx-auto min-h-4 max-w-[19.5rem] text-center text-xs font-bold leading-5 text-vocali-teal">{message ?? connectionError ?? (!isBrowserPreview && revenueCat.status === "loading" ? "Loading subscription information..." : "")}</p>
             {connectionError && !completed ? <div className="flex justify-center gap-4 text-sm font-bold text-vocali-teal"><button type="button" disabled={retrying || revenueCat.busy} onClick={() => void retryConnection()} className="min-h-11">{retrying ? "Retrying..." : "Retry connection"}</button><Link className="flex min-h-11 items-center" href={publicPageHref("/support", paywallHref(entry, selectedPlanId))}>Support</Link></div> : null}

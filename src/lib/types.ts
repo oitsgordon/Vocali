@@ -94,6 +94,7 @@ export type LocalAttempt = {
   isDailyChallenge?: boolean;
   dailyChallengeDate?: string;
   source?: "daily" | "practice";
+  guestTrial?: boolean;
 };
 
 export type UserProfile = {

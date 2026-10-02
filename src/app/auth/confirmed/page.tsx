@@ -1,8 +1,21 @@
+import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { VocaliLogo } from "@/components/brand/VocaliLogo";
 import { ScreenFrame } from "@/components/layout/ScreenFrame";
+import { publicReturnDestination } from "@/lib/publicNavigation";
 
-export default function EmailConfirmedPage() {
+export default async function EmailConfirmedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const rawRedirect = Array.isArray(params.redirect)
+    ? params.redirect[0]
+    : params.redirect;
+  const redirect = publicReturnDestination(rawRedirect) ?? "/home";
+  const loginHref = `/login?${new URLSearchParams({ mode: "login", redirect })}`;
+
   return (
     <ScreenFrame>
       <section className="vocali-safe-top vocali-safe-bottom mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-7 pt-8 text-center sm:min-h-[760px]">
@@ -21,8 +34,14 @@ export default function EmailConfirmedPage() {
             Email confirmed
           </h1>
           <p className="mx-auto mt-4 max-w-xs text-base font-medium leading-7 text-vocali-muted">
-            You can return to Vocali.
+            Sign in to continue to your Vocali plan.
           </p>
+          <Link
+            href={loginHref}
+            className="mt-7 flex min-h-14 w-full max-w-xs items-center justify-center rounded-[1rem] bg-vocali-orange px-5 text-base font-black text-white"
+          >
+            Continue to sign in
+          </Link>
         </div>
       </section>
     </ScreenFrame>
