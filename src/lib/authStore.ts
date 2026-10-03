@@ -108,11 +108,13 @@ export function useAuth() {
 }
 
 export async function signUpWithEmail({
+  captchaToken,
   displayName,
   email,
   password,
   redirectPath = "/home",
 }: {
+  captchaToken: string;
   displayName: string;
   email: string;
   password: string;
@@ -131,6 +133,7 @@ export async function signUpWithEmail({
     email,
     password,
     options: {
+      captchaToken,
       data: {
         display_name: displayName,
       },
@@ -139,7 +142,7 @@ export async function signUpWithEmail({
   });
 
   if (error) {
-    return { ok: false, error: error.message };
+    return { ok: false, error: emailAuthErrorMessage(error.message) };
   }
 
   if (data.user) {
@@ -208,9 +211,11 @@ export async function closeGuestTrialSession(): Promise<AuthResult> {
 }
 
 export async function signInWithEmail({
+  captchaToken,
   email,
   password,
 }: {
+  captchaToken: string;
   email: string;
   password: string;
 }): Promise<AuthResult> {
@@ -226,12 +231,13 @@ export async function signInWithEmail({
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: { captchaToken },
   });
 
-  return error ? { ok: false, error: error.message } : { ok: true, error: null };
+  return error ? { ok: false, error: emailAuthErrorMessage(error.message) } : { ok: true, error: null };
 }
 
-export async function requestPasswordReset(email: string): Promise<AuthResult> {
+export async function requestPasswordReset(email: string, captchaToken: string): Promise<AuthResult> {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
@@ -248,10 +254,17 @@ export async function requestPasswordReset(email: string): Promise<AuthResult> {
   const redirectUrl = new URL("/auth/callback", window.location.origin);
   redirectUrl.searchParams.set("redirect", "/reset-password");
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    captchaToken,
     redirectTo: redirectUrl.toString(),
   });
 
-  return error ? { ok: false, error: error.message } : { ok: true, error: null };
+  return error ? { ok: false, error: emailAuthErrorMessage(error.message) } : { ok: true, error: null };
+}
+
+function emailAuthErrorMessage(message: string) {
+  return /captcha|turnstile/i.test(message)
+    ? "The security check was not accepted. Complete the new check and try again."
+    : message;
 }
 
 export async function updatePassword(password: string): Promise<AuthResult> {
