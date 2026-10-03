@@ -2148,7 +2148,7 @@ function FeedbackView({
           type="button"
           onClick={finishPractice}
           disabled={isFinishing}
-          className="flex h-16 items-center justify-center rounded-[1.2rem] bg-vocali-orange text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
+          className="flex h-16 w-full items-center justify-center rounded-[1.2rem] bg-vocali-orange text-lg font-black text-white shadow-[0_14px_26px_rgb(255_122_26/0.28)]"
         >
           {isFinishing ? "Saving..." : isGuestTrial ? "Continue" : "Finish"}
         </button>

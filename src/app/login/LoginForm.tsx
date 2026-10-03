@@ -26,6 +26,7 @@ import {
 } from "@/lib/userPreferences";
 import { loginPaywallHref } from "@/lib/subscriptionPresentation";
 import { isAnonymousUser } from "@/lib/guestTrial";
+import { TurnstileChallenge } from "@/components/auth/TurnstileChallenge";
 
 type AuthMode = "login" | "signup";
 type OAuthProvider = "apple" | "google";
@@ -51,6 +52,9 @@ export function LoginForm({
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const emailActionBusyRef = useRef(false);
   const isAppleSignInEnabled = useSyncExternalStore(
     subscribeToNativeAuthAvailability,
     isNativeAppleSignInAvailable,
@@ -71,7 +75,12 @@ export function LoginForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (emailActionBusyRef.current) return;
     setMessage(null);
+    if (!captchaToken) {
+      setMessage("Complete the security check to continue.");
+      return;
+    }
     setIsSubmitting(true);
     const trimmedDisplayName = displayName.trim();
 
@@ -89,17 +98,32 @@ export function LoginForm({
 
     suppressAuthRedirectRef.current = isSignup;
 
-    const result = isSignup
+    emailActionBusyRef.current = true;
+    const requestToken = captchaToken;
+    setCaptchaToken(null);
+    let result;
+    try {
+      result = isSignup
       ? await signUpWithEmail({
+          captchaToken: requestToken,
           displayName: trimmedDisplayName,
           email,
           password,
           redirectPath,
         })
       : await signInWithEmail({
+          captchaToken: requestToken,
           email,
           password,
         });
+    } catch {
+      result = { ok: false, error: "We could not connect. Please try again." };
+    } finally {
+      emailActionBusyRef.current = false;
+      setIsSubmitting(false);
+      setCaptchaToken(null);
+      setCaptchaResetKey((value) => value + 1);
+    }
 
     if (result.ok && isSignup) {
       saveUserPreferences({
@@ -145,6 +169,7 @@ export function LoginForm({
   }
 
   async function handleForgotPassword() {
+    if (emailActionBusyRef.current) return;
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
@@ -152,10 +177,27 @@ export function LoginForm({
       return;
     }
 
+    if (!captchaToken) {
+      setMessage("Complete the security check to request a reset link.");
+      return;
+    }
+
     setMessage(null);
     setIsSendingPasswordReset(true);
-    const result = await requestPasswordReset(trimmedEmail);
-    setIsSendingPasswordReset(false);
+    emailActionBusyRef.current = true;
+    const requestToken = captchaToken;
+    setCaptchaToken(null);
+    let result;
+    try {
+      result = await requestPasswordReset(trimmedEmail, requestToken);
+    } catch {
+      result = { ok: false, error: "We could not connect. Please try again." };
+    } finally {
+      emailActionBusyRef.current = false;
+      setIsSendingPasswordReset(false);
+      setCaptchaToken(null);
+      setCaptchaResetKey((value) => value + 1);
+    }
     setMessage(
       result.ok
         ? "If an account exists for that email, a password reset link is on its way."
@@ -218,6 +260,8 @@ export function LoginForm({
                   suppressAuthRedirectRef.current = false;
                   setIsCheckingEmail(false);
                   setMode("login");
+                  setCaptchaToken(null);
+                  setCaptchaResetKey((value) => value + 1);
                   setMessage(null);
                 }}
                 className="mt-3 text-sm font-bold text-vocali-teal-deep"
@@ -309,7 +353,7 @@ export function LoginForm({
                   <button
                     type="button"
                     onClick={() => void handleForgotPassword()}
-                    disabled={isSendingPasswordReset || isSubmitting}
+                    disabled={isSendingPasswordReset || isSubmitting || !captchaToken || Boolean(activeOAuthProvider)}
                     className="-mt-1 block w-full text-right text-sm font-bold text-vocali-teal disabled:opacity-60"
                   >
                     {isSendingPasswordReset
@@ -331,6 +375,12 @@ export function LoginForm({
                   />
                 ) : null}
 
+                <TurnstileChallenge
+                  resetKey={captchaResetKey}
+                  onToken={setCaptchaToken}
+                  onError={() => {}}
+                />
+
                 {message || auth.syncMessage || auth.errorMessage ? (
                   <p className="rounded-[1rem] bg-vocali-teal/10 p-3 text-sm font-semibold leading-5 text-vocali-teal">
                     {message ?? auth.syncMessage ?? auth.errorMessage}
@@ -341,6 +391,7 @@ export function LoginForm({
                   type="submit"
                   disabled={
                     isSubmitting ||
+                    !captchaToken ||
                     isSendingPasswordReset ||
                     Boolean(activeOAuthProvider) ||
                     !auth.isReady
@@ -366,6 +417,8 @@ export function LoginForm({
               type="button"
               onClick={() => {
                 setMode(isSignup ? "login" : "signup");
+                setCaptchaToken(null);
+                setCaptchaResetKey((value) => value + 1);
                 setMessage(null);
               }}
               className="font-extrabold text-vocali-teal"
